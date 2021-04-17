@@ -1,5 +1,6 @@
 from multiprocessing import Process
 import requests
+from time import sleep
 
 
 class CommanderAgent:
@@ -8,13 +9,18 @@ class CommanderAgent:
         self.beacon = Process(target=self.checkIn)
         self.runner = Process(target=self.worker)
         self.exitSignal = False
+        self.jobQueue = []
 
     def register(self, serverAddress):
+        # TODO: generate client side cert to identify agent
+        # TODO: contact server and register agent
         pass
 
     def checkIn(self):
         while not self.exitSignal:
-            pass
+            # TODO: send request to server
+            # TODO: download executable and create job
+            sleep(5)
 
     def execute(self, filePath):
         pass
@@ -23,7 +29,12 @@ class CommanderAgent:
         pass
 
     def worker(self):
-        pass
+        while not self.exitSignal:
+            if self.jobQueue:
+                job = Process(target=self.execute, args=(self.jobQueue[0]))
+                job.start()
+                self.jobQueue.pop(0)
+            sleep(3)
 
     def run(self):
         self.beacon.start()
