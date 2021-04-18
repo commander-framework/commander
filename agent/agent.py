@@ -12,7 +12,7 @@ class CommanderAgent:
         self.jobQueue = []
 
     def register(self, serverAddress):
-        # TODO: generate client side cert to identify agent
+        # TODO: use client side cert to identify agent
         # TODO: contact server and register agent
         pass
 
