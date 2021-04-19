@@ -9,7 +9,6 @@ from server.models import *
 def generateAgentInstaller():
     # TODO: check admin authentication token
     # TODO: check OS version
-    osVersion = json.loads(request.json)
     # TODO: request installer client cert from CA
     # TODO: build executable installer
     # TODO: return installer
@@ -23,7 +22,7 @@ def register():
 
 
 @app.route("/agent/jobs", methods=["GET", "POST"])
-def checkIn():
+def jobs():
     if request.method == "GET":
         # TODO: check db for jobs
         # TODO: send most recent job to agent
@@ -35,30 +34,36 @@ def checkIn():
         pass
 
 
-@app.route("/agent/library", methods=["GET", "POST"])
+@app.route("/admin/library", methods=["GET", "POST", "PATCH", "DELETE"])
 def library():
     # TODO: check admin authentication token
     if request.method == "GET":
-        # TODO: return formatted library info
+        # TODO: return simplified library json
         pass
-    elif request.methods == "POST":
+    elif request.method == "POST":
         # TODO: save executable and generate library entry in db
         pass
+    elif request.method == "PATCH":
+        # TODO: check if update is for file or description
+        # TODO: save new executable for existing library entry in db
+        # or
+        # TODO: update library description for file
+        pass
+    elif request.method == "DELETE":
+        # TODO: delete executable and existing library entry in db
+        pass
 
 
-@app.route("/admin/login", methods=["POST"])
+@app.route("/admin/login", methods=["POST", "PATCH"])
 def login():
     # TODO: hash password and check match
-    # TODO: generate authentication token and set expiration
-    # TODO: return authentication token and expiration date
-    pass
-
-
-@app.route("/admin/reset-password", methods=["POST"])
-def resetPassword():
-    # TODO: check current password hash
-    # TODO: change password
-    pass
+    if request.method == "POST":
+        # TODO: generate authentication token and set expiration
+        # TODO: return authentication token and expiration date
+        pass
+    elif request.method == "PATCH":
+        # TODO: change password
+        pass
 
 
 @app.route("/admin/generate-registration-key", methods=["GET"])
