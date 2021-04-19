@@ -1,11 +1,24 @@
 from flask import request
+import json
+import requests
 from server import app
 from server.models import *
 
 
+@app.route("/agent/generate", methods=["GET"])
+def generateAgentInstaller():
+    # TODO: check admin authentication token
+    # TODO: check OS version
+    osVersion = json.loads(request.json)
+    # TODO: request installer client cert from CA
+    # TODO: build executable installer
+    # TODO: return installer
+    pass
+
+
 @app.route("/agent/register", methods=["POST"])
 def register():
-    # TODO: register client
+    # TODO: check registration key
     pass
 
 
@@ -16,7 +29,7 @@ def checkIn():
         # TODO: send most recent job to agent
         pass
     elif request.method == "POST":
-        # TODO: validate operator authentication
+        # TODO: check admin authentication token
         # TODO: save executable if not in library
         # TODO: add job to agent's queue in db
         pass
@@ -24,6 +37,7 @@ def checkIn():
 
 @app.route("/agent/library", methods=["GET", "POST"])
 def library():
+    # TODO: check admin authentication token
     if request.method == "GET":
         # TODO: return formatted library info
         pass
@@ -32,16 +46,24 @@ def library():
         pass
 
 
-@app.route("/operator/login", methods=["POST"])
+@app.route("/admin/login", methods=["POST"])
 def login():
-    # TODO: check password hash
+    # TODO: hash password and check match
     # TODO: generate authentication token and set expiration
-    # TODO: return authentication token
+    # TODO: return authentication token and expiration date
     pass
 
 
-@app.route("/operator/reset-password", methods=["POST"])
+@app.route("/admin/reset-password", methods=["POST"])
 def resetPassword():
     # TODO: check current password hash
     # TODO: change password
+    pass
+
+
+@app.route("/admin/generate-registration-key", methods=["GET"])
+def genRegistrationKey():
+    # TODO: check admin authentication token
+    # TODO: set registration key in db
+    # TODO: return key
     pass
