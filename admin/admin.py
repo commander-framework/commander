@@ -65,7 +65,7 @@ class Administrator:
                 creds = json.loads(authFile.read())
             if not creds:
                 raise FileNotFoundError
-            if not creds.authToken[0] or datetime.strptime(creds.authToken[1], "%m/%d/%Y, %H:%M:%S") < datetime.now():
+            if not creds.authToken[0] or datetime.strptime(creds.authToken[1], "%m/%d/%Y, %H:%M:%S") < datetime.utcnow():
                 creds = self.login(creds.username)
                 with open("token.json", "w") as authFile:
                     authFile.write(json.dumps(creds))
