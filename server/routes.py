@@ -1,6 +1,5 @@
 from datetime import datetime
 from flask import request, send_file
-import json
 from .models import *
 import requests
 from server import app
