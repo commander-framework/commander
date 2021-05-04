@@ -4,7 +4,6 @@ FROM tobix/pywine:latest
 ARG SECRET_KEY="super-secret-default-key"
 ARG DB_USER=""
 ARG DB_PASS=""
-ARG DB_NAME="commander"
 ARG DB_URI="mongodb://localhost/"
 ARG UPLOADS_DIR="/opt/commander/library/"
 

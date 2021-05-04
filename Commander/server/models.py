@@ -5,6 +5,7 @@ from mongoengine import Document, EmbeddedDocument, IntField, StringField, \
 class Job(EmbeddedDocument):
     fileName = StringField(required=True)
     description = StringField(required=True)
+    os = StringField(required=True)
     user = StringField(required=True)
     timeSubmitted = DateTimeField(required=True)
     timeRan = DateTimeField()
@@ -14,6 +15,7 @@ class Job(EmbeddedDocument):
 
 class Agent(Document):
     hostname = StringField(required=True)
+    os = StringField(required=True)
     jobsQueue = ListField(EmbeddedDocumentField(Job))
     jobsHistory = ListField(EmbeddedDocumentField(Job))
     meta = {"db_alias": "agent_db"}
