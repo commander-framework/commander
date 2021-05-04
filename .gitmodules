@@ -1,0 +1,3 @@
+[submodule "CAPy"]
+	path = CAPy
+	url = github:doctormay6/CAPy
