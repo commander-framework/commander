@@ -5,14 +5,20 @@ import requests
 from server import app
 
 
-@app.route("/agent/generate", methods=["GET"])
-def generateAgentInstaller():
-    """ Generate an agent installer for the given operating system """
+@app.route("/agent/installer", methods=["GET"])
+def agentInstaller():
+    """ Fetch or generate an agent installer for the given operating system """
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}
     # TODO: check OS version
+    targetOS = request.json["os"]
+    if targetOS not in ["linux", "windows"]:
+        return {"error": "the only supported agent architectures are linux and windows"}
     # TODO: request installer client cert from CA
+    response = requests.get("http://" + app.config["CA_HOSTNAME"] + "/ca/host-certificate",
+                            headers={"Content-Type": "application/json"},
+                            data={"hostname": f"{targetOS}installer"})
     # TODO: build executable installer
     # TODO: return installer
     pass
