@@ -20,9 +20,9 @@ ARG UPLOADS_DIR=$UPLOADS_DIR
 COPY ./* /opt/commander
 RUN pip install -r /opt/commander/requirements.txt
 
-# for documentation purposes --> still need to specify at runtime
-EXPOSE 80:5000
-VOLUME CommanderLibrary:$UPLOADS_DIR
+# mostly for documentation purposes --> should still specify at runtime
+EXPOSE 5000
+VOLUME $UPLOADS_DIR
 
 # start app
-ENTRYPOINT ["python", "/run/commander.py"]
+ENTRYPOINT ["python", "/opt/commander/commander.py"]
