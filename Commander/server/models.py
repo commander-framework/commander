@@ -15,7 +15,9 @@ class Job(EmbeddedDocument):
 
 class Agent(Document):
     hostname = StringField(required=True)
+    clientID = StringField(required=True)
     os = StringField(required=True)
+    lastCheckin = DateTimeField(required=True)
     jobsQueue = ListField(EmbeddedDocumentField(Job))
     jobsHistory = ListField(EmbeddedDocumentField(Job))
     meta = {"db_alias": "agent_db"}
