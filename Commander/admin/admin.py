@@ -7,7 +7,7 @@ import requests
 class Administrator:
     def __init__(self, commanderServer):
         self.commanderServer = commanderServer
-        self.clientCert = ("adminCert.pem", "adminCert.key")
+        self.clientCert = ("adminCert.crt", "adminKey.pem")
         self.serverCert = "commander.crt"
         self.username, self.authToken = self.getAuth()
         self.headers = {"Content-Type": "application/json",
