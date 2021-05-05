@@ -15,7 +15,7 @@ class Job(EmbeddedDocument):
 
 class Agent(Document):
     hostname = StringField(required=True)
-    clientID = StringField(required=True)
+    agentID = StringField(required=True)
     os = StringField(required=True)
     lastCheckin = DateTimeField(required=True)
     jobsQueue = ListField(EmbeddedDocumentField(Job))
