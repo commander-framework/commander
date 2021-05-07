@@ -1,13 +1,17 @@
+import json
 from multiprocessing import Process
 import requests
+from socket import gethostname
 from time import sleep
 
 
 class CommanderAgent:
-    def __init__(self, serverAddress):
+    def __init__(self, serverAddress, registrationKey=""):
+        self.commanderServer = serverAddress
+        self.registrationKey = registrationKey
         self.clientCert = ("agentCert.crt", "agentKey.pem")
         self.serverCert = "commander.crt"
-        self.agentID = self.register(serverAddress)
+        self.agentID = self.register()
         self.headers = {"Content-Type": "application/json",
                         "agentID": self.agentID}
         self.beacon = Process(target=self.checkIn)
@@ -59,12 +63,27 @@ class CommanderAgent:
                                       files=files)
         return response
 
-    def register(self, serverAddress):
-        # TODO: check for existing config to see if agent is already registered
-        # TODO: if not, contact server and register agent (use hostname in header instead of agentID)
-        # TODO: modify config if newly registered
-        agentID = ""
-        return agentID
+    def register(self):
+        # check for existing config to see if agent is already registered
+        try:
+            with open("agentConfig.json", "r") as configFile:
+                configJson = json.loads(configFile.read())
+                if not configJson:
+                    raise FileNotFoundError
+        except FileNotFoundError:
+            # contact server and register agent
+            response = self.request("POST", "/agent/register",
+                                    headers={"Content-Type": "application/json"},
+                                    body={"hostname": gethostname(),
+                                          "registrationKey": self.registrationKey})
+            # create config and save to disk
+            if "error" in response.json:
+                raise ValueError(response.json()["error"])
+            configJson = {"hostname": gethostname(),
+                          "agentID": response.json()["agentID"]}
+            with open("agentConfig.json", "w+") as configFile:
+                configFile.write(json.dumps(configJson))
+        return configJson["agentID"]
 
     def checkIn(self):
         while not self.exitSignal:
