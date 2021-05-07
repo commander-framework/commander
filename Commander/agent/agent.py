@@ -6,12 +6,14 @@ from time import sleep
 
 
 class CommanderAgent:
-    def __init__(self, serverAddress, registrationKey=""):
-        self.commanderServer = serverAddress
-        self.registrationKey = registrationKey
+    def __init__(self, serverAddress="", registrationKey=""):
         self.clientCert = ("agentCert.crt", "agentKey.pem")
         self.serverCert = "commander.crt"
+        self.commanderServer = serverAddress
+        self.registrationKey = registrationKey
         self.agentID = self.register()
+        if not self.commanderServer:
+            raise ValueError("server address was not included in the installer or was not found in existing config")
         self.headers = {"Content-Type": "application/json",
                         "agentID": self.agentID}
         self.beacon = Process(target=self.checkIn)
@@ -64,6 +66,7 @@ class CommanderAgent:
         return response
 
     def register(self):
+        """ Register agent with the commander server or fetch existing configuration """
         # check for existing config to see if agent is already registered
         try:
             with open("agentConfig.json", "r") as configFile:
@@ -80,24 +83,29 @@ class CommanderAgent:
             if "error" in response.json:
                 raise ValueError(response.json()["error"])
             configJson = {"hostname": gethostname(),
-                          "agentID": response.json()["agentID"]}
+                          "agentID": response.json()["agentID"],
+                          "commanderServer": self.commanderServer}
             with open("agentConfig.json", "w+") as configFile:
                 configFile.write(json.dumps(configJson))
         return configJson["agentID"]
 
     def checkIn(self):
+        """ Check in with the commander server to see if there are any jobs to run """
         while not self.exitSignal:
             # TODO: send request to server
             # TODO: download executable and create job
             sleep(5)
 
     def execute(self, filePath):
+        """ Call the executable for a job and return its output and execution status """
         pass
 
     def cleanup(self, filePath):
+        """ Remove executable for a job and send execution status back to commander server """
         pass
 
     def worker(self):
+        """ Asynchronously execute jobs from commander server """
         while not self.exitSignal:
             if self.jobQueue:
                 job = Process(target=self.execute, args=(self.jobQueue[0]))
@@ -106,6 +114,7 @@ class CommanderAgent:
             sleep(3)
 
     def run(self):
+        """ Start agent """
         self.beacon.start()
         self.runner.start()
         self.beacon.join()
