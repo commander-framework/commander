@@ -9,7 +9,10 @@ class Job(EmbeddedDocument):
     user = StringField(required=True)
     timeSubmitted = DateTimeField(required=True)
     timeRan = DateTimeField()
+    argv = ListField(StringField())
     status = IntField()
+    stdout = StringField()
+    stderr = StringField()
     meta = {"db_alias": "agent_db"}
 
 
@@ -19,6 +22,7 @@ class Agent(Document):
     os = StringField(required=True)
     lastCheckin = DateTimeField(required=True)
     jobsQueue = ListField(EmbeddedDocumentField(Job))
+    jobsRunning = ListField(EmbeddedDocumentField(Job))
     jobsHistory = ListField(EmbeddedDocumentField(Job))
     meta = {"db_alias": "agent_db"}
 
