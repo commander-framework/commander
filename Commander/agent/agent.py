@@ -93,6 +93,8 @@ class CommanderAgent:
         """ Check in with the commander server to see if there are any jobs to run """
         while not self.exitSignal:
             # TODO: send request to server
+            response = self.request("GET", "/agent/jobs",
+                                    body={""})
             # TODO: download executable and create job
             sleep(5)
 

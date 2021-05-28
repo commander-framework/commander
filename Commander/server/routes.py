@@ -45,15 +45,21 @@ def jobs():
         jobsQueue = agent["jobsQueue"].objects().order_by("+timeSubmitted")
         if not jobsQueue:
             return {"jobs": "no jobs"}
+        # move job to running queue
+        job = jobsQueue.pop(0)
+        agent["jobsRunning"].append(job)
+        agent.save()
         # send most recent job to agent
-        return send_file(jobsQueue[0]["storagePath"], attachment_filename=jobsQueue[0]["fileName"])
+        return {"filename": job["fileName"],
+                "argv": job["argv"]}
     elif request.method == "POST":
         """ Admin submitting a job -- add job to the specified agent's queue """
         # check admin authentication token
         if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
             return {"error": "invalid auth token or token expired"}
         # add job to agent's queue in db
-        filename = request.json["filename"]  # TODO: error checking
+        filename = request.json["filename"]  # TODO: error handling (filename should exist in library)
+        command = request.json["command"]   # TODO: error handling (should be list of strings)
         libraryQuery = Library.objects()[0]
         if not libraryQuery:
             return {"error": "no executables found in library"}
@@ -69,8 +75,30 @@ def jobs():
         if len(hostsQuery) > 1:
             return {"error": "multiple agents found with the given hostname"}
         agent = hostsQuery[0]
+        job["argv"] = command
+        job["timeSubmitted"] = datetime.utcnow()
         agent["jobsQueue"].append(job)
+        agent.save()
         return {"success": "job successfully submitted -- waiting for agent to check in"}
+
+
+@app.route("/agent/execution", methods=["GET", "POST"])
+def execute():
+    if request.method == "GET":
+        """ Send executable or script to the agent for execution """
+        # check db for jobs
+        agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
+        if not agentQuery:
+            return {"error": "agent ID not found"}
+        agent = agentQuery[0]
+        jobRequested = agent["jobsRunning"].objects(filename__exact=request.json["filename"])
+        if not jobRequested:
+            return {"error": "no jobs available for download"}
+        return send_file(jobsQueue[0]["storagePath"],
+                         attachment_filename=jobsQueue[0]["fileName"])
+    elif request.method == "POST":
+        """ Job has been executed -- save output and return code """
+        pass
 
 
 @app.route("/admin/library", methods=["GET", "POST", "PATCH", "DELETE"])
