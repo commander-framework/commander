@@ -1,6 +1,6 @@
 # commander
 
-A server and endpoint agent template with modular capability adding. (currently in Alpha/development phase)
+A server and agent template with easy agent capability adding. (currently in Alpha/development phase)
 
 ## Out of the box features:
 
