@@ -11,7 +11,7 @@ def agentInstaller():
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}
-    # TODO: check OS version
+    # check OS version
     targetOS = request.json["os"]
     if targetOS not in ["linux", "windows"]:
         return {"error": "the only supported agent architectures are linux and windows"}
