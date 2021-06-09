@@ -20,7 +20,7 @@ To add capabilities to your agent, you just need to add a job to the Library. A 
 
 Agents are coded to do nothing but check in for jobs which keeps the memory footprint low. When a job is sent to an agent, the agent will download what it needs, execute it, and delete it afterwards.
 
-(In the future, functionality will be added that enables agents to store persistent capabilities on the host side)
+(In the future, functionality will be added that enables agents to store persistent capabilities and background processes on the host side)
 
 ### Admin authentication
 
