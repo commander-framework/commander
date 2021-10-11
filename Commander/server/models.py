@@ -3,11 +3,13 @@ from mongoengine import Document, EmbeddedDocument, IntField, StringField, \
 
 
 class Job(EmbeddedDocument):
+    executor = StringField(required=True)
     fileName = StringField(required=True)
     description = StringField(required=True)
     os = StringField(required=True)
     user = StringField(required=True)
-    timeSubmitted = DateTimeField(required=True)
+    timeCreated = DateTimeField(required=True)
+    timeDispatched = DateTimeField()
     timeRan = DateTimeField()
     argv = ListField(StringField())
     status = IntField()
@@ -24,11 +26,6 @@ class Agent(Document):
     jobsQueue = ListField(EmbeddedDocumentField(Job))
     jobsRunning = ListField(EmbeddedDocumentField(Job))
     jobsHistory = ListField(EmbeddedDocumentField(Job))
-    meta = {"db_alias": "agent_db"}
-
-
-class Library(Document):
-    jobs = ListField(EmbeddedDocumentField(Job))
     meta = {"db_alias": "agent_db"}
 
 

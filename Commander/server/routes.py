@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import request, send_file
-from .models import *
+import json
+from .models import Agent, Job, Session, User
 import requests
 from server import app
 
@@ -37,26 +38,31 @@ def register():
 def jobs():
     if request.method == "GET":
         """ Agent checking in -- send file to be executed if a job is waiting """
+        if missingParams := missing(request, headers=["Agent-ID"]):
+            return {"error": missingParams}, 400
         # check db for jobs
         agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
         if not agentQuery:
-            return {"error": "agent ID not found"}
+            return {"error": "agent ID not found"}, 400
         agent = agentQuery[0]
         jobsQueue = agent["jobsQueue"].objects().order_by("+timeSubmitted")
         if not jobsQueue:
-            return {"jobs": "no jobs"}
-        # move job to running queue
+            return {"job": "no jobs"}, 200
+        # get ready to send available job
         job = jobsQueue.pop(0)
+        # move job to running queue
+        job["timeDispatched"] = datetime.now()
         agent["jobsRunning"].append(job)
         agent.save()
         # send most recent job to agent
-        return {"filename": job["fileName"],
-                "argv": job["argv"]}
+        return {"job": json.dumps(job)}
     elif request.method == "POST":
         """ Admin submitting a job -- add job to the specified agent's queue """
+        if missingParams := missing(request, headers=["Auth-Token", "Username"]):
+            return {"error": missingParams}, 401
         # check admin authentication token
         if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
-            return {"error": "invalid auth token or token expired"}
+            return {"error": "invalid auth token or token expired"}, 403
         # add job to agent's queue in db
         filename = request.json["filename"]  # TODO: error handling (filename should exist in library)
         command = request.json["command"]   # TODO: error handling (should be list of strings)
@@ -82,10 +88,12 @@ def jobs():
         return {"success": "job successfully submitted -- waiting for agent to check in"}
 
 
-@app.route("/agent/execution", methods=["GET", "POST"])
+@app.route("/agent/execute", methods=["GET", "POST"])
 def execute():
     if request.method == "GET":
         """ Send executable or script to the agent for execution """
+        if missingParams := missing(request, headers=["Agent-ID"], data=["filename"]):
+            return {"error": missingParams}, 400
         # check db for jobs
         agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
         if not agentQuery:
@@ -93,7 +101,8 @@ def execute():
         agent = agentQuery[0]
         jobRequested = agent["jobsRunning"].objects(filename__exact=request.json["filename"])
         if not jobRequested:
-            return {"error": "no jobs available for download"}
+            return {"error": "no matching jobs available for download"}, 400
+        # send executable to the agent
         return send_file(jobsQueue[0]["storagePath"],
                          attachment_filename=jobsQueue[0]["fileName"])
     elif request.method == "POST":
@@ -181,3 +190,31 @@ def authenticate(authToken):
     if token["expires"] < datetime.utcnow():
         return None
     return token["username"]
+
+
+def missing(request, headers=None, data=None):
+    """ Return error message about missing paramaters if there are any """
+    missingHeaders = []
+    missingData = []
+    if headers:
+        for header in headers:
+            if header not in request.headers:
+                missingHeaders.append(header)
+    if data:
+        for field in data:
+            if field not in request.json:
+                missingHeaders.append(field)
+    if not missingHeaders and not missingData:
+        return None
+    errMsg = "request is missing one or more of the following parameters: "
+    if missingHeaders:
+        errMsg += "header['"
+        errMsg += "'], header['".join(headers)
+        errMsg += "']"
+    if missingHeaders and missingData:
+        errMsg += ", "
+    if missingData:
+        errMsg += "data['"
+        errMsg += ", ".join(data)
+        errMsg += "']"
+    return errMsg
