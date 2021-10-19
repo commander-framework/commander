@@ -19,6 +19,11 @@ class Job(EmbeddedDocument):
     meta = {"db_alias": "agent_db"}
 
 
+class Library(Document):
+    jobs = ListField(EmbeddedDocumentField(Job))
+    meta = {"db_alias": "agent_db"}
+
+
 class Agent(Document):
     hostname = StringField(required=True)
     agentID = StringField(required=True)
