@@ -1,10 +1,10 @@
 import bcrypt
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import request, send_file
-import json
 from .models import Agent, Job, RegistrationKey, Session, User
 import requests
 from server import app
+from utils import timestampToDatetime, utcNowTimestamp
 
 
 @app.get("/agent/installer")
@@ -51,7 +51,7 @@ def checkForJobs():
     # get ready to send available job
     job = jobsQueue.pop(0)
     # move job to running queue
-    job["timeDispatched"] = datetime.utcnow()
+    job["timeDispatched"] = utcNowTimestamp()
     agent["jobsRunning"].append(job)
     agent.save()
     # send most recent job to agent
@@ -82,7 +82,7 @@ def assignJob():
     agent = hostsQuery[0]
     job["user"] = request.headers["Username"]
     job["argv"] = command
-    job["timeSubmitted"] = datetime.utcnow()
+    job["timeSubmitted"] = utcNowTimestamp()
     agent["jobsQueue"].append(job)
     agent.save()
     return {"success": "job successfully submitted -- waiting for agent to check in"}, 200
@@ -157,7 +157,7 @@ def addNewJob():
                        os=request.json["os"],
                        executor=request.json["executor"],
                        user=request.headers["Username"],
-                       timeSubmitted=datetime.utcnow())
+                       timeSubmitted=utcNowTimestamp())
     # create library entry as long as filename doesn't already exist
     entriesQuery = Job.objects(filename__exact=filename)
     if entriesQuery:
@@ -227,7 +227,7 @@ def login():
         return {"error": "password does not match"}, 403
     # generate session and set expiration
     newToken = bcrypt.gensalt().decode()[7:] + bcrypt.gensalt().decode()[7:]
-    expiration = datetime.utcnow() + timedelta(hours=24)
+    expiration = utcNowTimestamp(deltaHours=24)
     session = Session(username=request.json["username"],
                       authToken=newToken,
                       expires=expiration)
@@ -307,7 +307,7 @@ def authenticate(authToken):
     if not sessionQuery:
         return None  # ensures empty username doesn't authenticate
     session = sessionQuery[0]
-    if session["expires"] < datetime.utcnow():
+    if timestampToDatetime(session["expires"]) < datetime.utcnow():
         return None
     return session["username"]
 
