@@ -1,7 +1,7 @@
 import bcrypt
 from datetime import datetime
 from flask import request, send_file
-from .models import Agent, Job, RegistrationKey, Session, User
+from .models import Agent, Job, Library, RegistrationKey, Session, User
 import requests
 from server import app
 from utils import timestampToDatetime, utcNowTimestamp
@@ -61,15 +61,18 @@ def checkForJobs():
 @app.post("/agent/jobs")
 def assignJob():
     """ Admin submitting a job -- add job to the specified agent's queue """
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["hostname", "filename", "command"]):
+    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["hostname", "filename", "argv"]):
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # add job to agent's queue in db
     filename = request.json["filename"]
-    command = request.json["command"]   # TODO: error handling (should be list of strings)
-    jobsQuery = Job.objects(filename__exact=filename)
+    argv = request.json["argv"]   # TODO: error handling (should be list of strings)
+    library = Library.objects().first()
+    if not library:
+        return {"error": "there are no jobs in the library yet"}, 400
+    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
     if not jobsQuery:
         return {"error": "the library contains no executable with the given filename"}, 400
     job = jobsQuery[0]
@@ -81,8 +84,8 @@ def assignJob():
         return {"error": "multiple agents found with the given hostname"}, 400
     agent = hostsQuery[0]
     job["user"] = request.headers["Username"]
-    job["argv"] = command
-    job["timeSubmitted"] = utcNowTimestamp()
+    job["argv"] = argv
+    job["timeCreated"] = utcNowTimestamp()
     agent["jobsQueue"].append(job)
     agent.save()
     return {"success": "job successfully submitted -- waiting for agent to check in"}, 200
@@ -98,6 +101,7 @@ def sendExecutable():
     if not agentQuery:
         return {"error": "agent ID not found"}
     agent = agentQuery[0]
+    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsQueue"]))
     jobRequestedQuery = agent["jobsRunning"].objects(filename__exact=request.json["filename"])
     if not jobRequestedQuery:
         return {"error": "no matching job available for download"}, 400
@@ -136,7 +140,7 @@ def getJobLibrary():
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
-    jobsQuery = Job.objects()
+    jobsQuery = Library.objects()
     return {"library": jobsQuery}
 
 
@@ -158,14 +162,22 @@ def addNewJob():
                        executor=request.json["executor"],
                        user=request.headers["Username"],
                        timeSubmitted=utcNowTimestamp())
-    # create library entry as long as filename doesn't already exist
-    entriesQuery = Job.objects(filename__exact=filename)
-    if entriesQuery:
+    # create library if it doesn't already exist
+    libraryQuery = Library.objects()
+    if not libraryQuery:
+        library = Library(jobs=[])
+        library.save()
+    else:
+        library = libraryQuery[0]
+    # check if filename already exists in the library
+    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
+    if jobsQuery:
         return {"error": "file name already exists in the library"}, 400
-    libraryEntry.save()
-    # save executable file to server
+    # save executable file to server and job entry to libary
     uploadedFile = request.files["file"]
     uploadedFile.save(app.config["UPLOADS_DIR"], filename)
+    library["jobs"].append(libraryEntry)
+    library.save()
     return {"success": "successfully added new executable to the commander library"}, 200
 
 
@@ -178,9 +190,12 @@ def updateJob():
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # make sure job exists
-    jobQuery = Job.objects(filename__exact=request.json["filename"])
-    if not jobQuery:
-        return {"error": "no existing job with that file name"}
+    library = Library.objects().first()
+    if not library:
+        return {"error": "there are no jobs in the library yet"}, 400
+    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
+    if not jobsQuery:
+        return {"error": "no existing job with that file name"}, 400
     # make sure request either updates the file or the description
     if "file" not in request.files and "description" not in request.json:
         return {"error": "niether a new file nor a new description was provided"}, 400
@@ -190,7 +205,7 @@ def updateJob():
         uploadedFile.save(app.config["UPLOADS_DIR"], request.json["filename"])
     # update library description for file if a new one was provided
     if "description" in request.json:
-        job = jobQuery[0]
+        job = jobsQuery[0]
         job["description"] = request.json["description"]
         job.save()
     return {"success": "successfully updated the job in the library"}
@@ -205,10 +220,17 @@ def deleteJob():
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}
     # make sure job exists
-    jobQuery = Job.objects(filename__exact=request.json["filename"])
-    if not jobQuery:
+    library = Library.objects().first()
+    if not library:
+        return {"error": "there are no jobs in the library yet"}, 400
+    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
+    if not jobsQuery:
         return {"error": "no existing job with that file name"}
-    # TODO: delete executable and existing library entry in db
+    # TODO: delete executable from file system
+    # remove existing library entry in db
+    job = jobsQuery[0]
+    job.delete()
+    job.save()
 
 
 @app.post("/admin/login")
