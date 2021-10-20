@@ -53,5 +53,4 @@ jobs:
 
     # Analyze code
     - name: Perform CodeQL Analysis
-      working-directory: ./Commander
       uses: github/codeql-action/analyze@v1
