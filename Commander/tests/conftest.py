@@ -73,6 +73,4 @@ def sample_User():
                 username="testuser",
                 passwordHash=hashedPass.decode(),
                 sessions=[])
-    user["sessions"].append(sample_valid_Session)
-    user["sessions"].append(sample_expired_Session)
     return user
