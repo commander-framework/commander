@@ -42,7 +42,6 @@ def checkForJobs():
     # check db for jobs
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
-        print("not found")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     jobsQueue = sorted(agent["jobsQueue"], key = lambda i: i["timeCreated"])
