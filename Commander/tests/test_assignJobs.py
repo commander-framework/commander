@@ -18,7 +18,7 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
                            headers={"Content-Type": "application/json",
                                     "Auth-Token": sample_valid_Session["authToken"],
                                     "Username": sample_valid_Session["username"]},
-                           data=json.dumps({"hostname": sample_Agent["hostname"],
+                           data=json.dumps({"agentID": sample_Agent["agentID"],
                                  "filename": sample_Job["filename"],
                                  "argv": []}))
     assert response.status_code == 200
@@ -62,8 +62,79 @@ def testExpiredSessionAssignJob(client, sample_Job, sample_Library, sample_Agent
                            headers={"Content-Type": "application/json",
                                     "Auth-Token": sample_expired_Session["authToken"],
                                     "Username": sample_expired_Session["username"]},
-                           data=json.dumps({"hostname": sample_Agent["hostname"],
+                           data=json.dumps({"agentID": sample_Agent["agentID"],
                                  "filename": sample_Job["filename"],
                                  "argv": []}))
     assert response.status_code == 403
     assert response.json["error"] == "invalid auth token or token expired"
+    agentDB.drop_database("agents")
+    adminDB.drop_database("admins")
+
+
+def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
+    # prepare mongomock with relevant sample documents
+    user = sample_User
+    user["sessions"].append(sample_valid_Session)
+    user.save()
+    agent = sample_Agent
+    agent.save()
+    # intentionally not creating a library document in the database
+    # send job to api
+    response = client.post("/agent/jobs",
+                           headers={"Content-Type": "application/json",
+                                    "Auth-Token": sample_valid_Session["authToken"],
+                                    "Username": sample_valid_Session["username"]},
+                           data=json.dumps({"agentID": sample_Agent["agentID"],
+                                 "filename": sample_Job["filename"],
+                                 "argv": []}))
+    assert response.status_code == 400
+    assert response.json["error"] == "there are no jobs in the library yet"
+    agentDB.drop_database("agents")
+    adminDB.drop_database("admins")
+
+
+def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
+    # prepare mongomock with relevant sample documents
+    user = sample_User
+    user["sessions"].append(sample_valid_Session)
+    user.save()
+    agent = sample_Agent
+    agent.save()
+    library = sample_Library
+    # intentionally not adding sample_Job to the library
+    library.save()
+    # send job to api
+    response = client.post("/agent/jobs",
+                           headers={"Content-Type": "application/json",
+                                    "Auth-Token": sample_valid_Session["authToken"],
+                                    "Username": sample_valid_Session["username"]},
+                           data=json.dumps({"agentID": sample_Agent["agentID"],
+                                 "filename": sample_Job["filename"],
+                                 "argv": []}))
+    assert response.status_code == 400
+    assert response.json["error"] == "the library contains no executable with the given filename"
+    agentDB.drop_database("agents")
+    adminDB.drop_database("admins")
+
+
+def testBadHostnameAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
+    # prepare mongomock with relevant sample documents
+    user = sample_User
+    user["sessions"].append(sample_valid_Session)
+    user.save()
+    # intentionally not adding agent document to the library
+    library = sample_Library
+    library["jobs"].append(sample_Job)
+    library.save()
+    # send job to api
+    response = client.post("/agent/jobs",
+                           headers={"Content-Type": "application/json",
+                                    "Auth-Token": sample_valid_Session["authToken"],
+                                    "Username": sample_valid_Session["username"]},
+                           data=json.dumps({"agentID": sample_Agent["agentID"],
+                                 "filename": sample_Job["filename"],
+                                 "argv": []}))
+    assert response.status_code == 400
+    assert response.json["error"] == "no hosts found matching the agentID in the request"
+    agentDB.drop_database("agents")
+    adminDB.drop_database("admins")
