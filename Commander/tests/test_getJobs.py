@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import json
 from server import agentDB
+from utils import timestampToDatetime
 
 
 def testCheckinWithNoJobs(client, sample_Agent):
@@ -31,9 +32,10 @@ def testCheckinWithJobs(client, sample_Agent, sample_Job):
     assert json.loads(response.json["job"])["description"] == sample_Job["description"]
     assert json.loads(response.json["job"])["os"] == sample_Job["os"]
     assert json.loads(response.json["job"])["user"] == sample_Job["user"]
-    createdTimestamp = json.loads(response.json["job"])["timeCreated"]["$date"]/1000
-    createdTime = datetime.fromtimestamp(createdTimestamp, None)
+    createdTimestamp = json.loads(response.json["job"])["timeCreated"]
+    createdTime = timestampToDatetime(createdTimestamp)
     assert timedelta(milliseconds=0) > (sample_Job["timeCreated"] - createdTime)
-    dispatchTimestamp = json.loads(response.json["job"])["timeDispatched"]["$date"]/1000
-    assert datetime.fromtimestamp(dispatchTimestamp, None) == sample_Job["timeDispatched"]
+    dispatchTimestamp = json.loads(response.json["job"])["timeDispatched"]
+    dispatchTime = timestampToDatetime(dispatchTimestamp)
+    assert timedelta(milliseconds=0) > (sample_Job["timeDispatched"] - dispatchTime)
     agentDB.drop_database("agents")

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from server import app
 from server.models import Job, Library, Agent, RegistrationKey, Session, User
+from utils import utcNowTimestamp
 
 
 @pytest.fixture
@@ -18,7 +19,7 @@ def sample_Job():
               description="Test job description. This job is not real.",
               os="windows",
               user="testuser",
-              timeCreated=datetime.utcnow())
+              timeCreated=utcNowTimestamp())
     return job
 
 
@@ -34,7 +35,7 @@ def sample_Agent():
     agent = Agent(hostname="testhost",
                   agentID="123456789",
                   os="windows",
-                  lastCheckin=datetime.utcnow(),
+                  lastCheckin=utcNowTimestamp(),
                   jobsQueue=[],
                   jobsRunning=[],
                   jobsHistory=[])
@@ -51,7 +52,7 @@ def sample_RegistrationKey():
 def sample_valid_Session():
     session = Session(username="testuser",
                       authToken="abcdef123456",
-                      expires=datetime.utcnow() + timedelta(hours=1))
+                      expires=utcNowTimestamp(deltaHours=1))
     return session
 
 
@@ -59,7 +60,7 @@ def sample_valid_Session():
 def sample_expired_Session():
     session = Session(username="testuser",
                       authToken="123456abcdef",
-                      expires=datetime.utcnow() + timedelta(hours=-1))
+                      expires=utcNowTimestamp(deltaHours=-1))
     return session
 
 

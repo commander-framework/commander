@@ -1,5 +1,5 @@
 from mongoengine import Document, EmbeddedDocument, IntField, StringField, \
-                        DateTimeField, ListField, EmbeddedDocumentField
+                        ListField, EmbeddedDocumentField
 
 
 class Job(EmbeddedDocument):
@@ -8,10 +8,10 @@ class Job(EmbeddedDocument):
     description = StringField(required=True)
     os = StringField(required=True)
     user = StringField(required=True)
-    timeCreated = DateTimeField(required=True)
-    timeDispatched = DateTimeField()
-    timeStarted = DateTimeField()
-    timeEnded = DateTimeField()
+    timeCreated = StringField(required=True)
+    timeDispatched = StringField()
+    timeStarted = StringField()
+    timeEnded = StringField()
     argv = ListField(StringField())
     status = IntField()
     stdout = StringField()
@@ -28,7 +28,7 @@ class Agent(Document):
     hostname = StringField(required=True)
     agentID = StringField(required=True)
     os = StringField(required=True)
-    lastCheckin = DateTimeField(required=True)
+    lastCheckin = StringField(required=True)
     jobsQueue = ListField(EmbeddedDocumentField(Job))
     jobsRunning = ListField(EmbeddedDocumentField(Job))
     jobsHistory = ListField(EmbeddedDocumentField(Job))
@@ -43,7 +43,7 @@ class RegistrationKey(Document):
 class Session(EmbeddedDocument):
     username = StringField(required=True)
     authToken = StringField(required=True)
-    expires = DateTimeField(required=True)
+    expires = StringField(required=True)
     meta = {"db_alias": "admin_db"}
 
 
