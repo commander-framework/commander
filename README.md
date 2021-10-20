@@ -2,6 +2,8 @@
 
 A server and agent template with easy agent capability adding. (currently in Alpha/development phase)
 
+![Build/Tests](https://github.com/lawndoc/commander/actions/workflows/build-test.commander.yml/badge.svg)
+
 ## Out of the box features:
 
 ### TLS encryption
