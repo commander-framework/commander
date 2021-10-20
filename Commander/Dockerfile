@@ -26,7 +26,7 @@ FROM ubuntu:20.04 AS runner-image
 ARG SECRET_KEY="super-secret-default-key"
 ARG DB_USER=""
 ARG DB_PASS=""
-ARG DB_URI="mongodb://localhost/"
+ARG DB_URI="mongomock://localhost/"
 ARG CA_HOSTNAME="CAPy.local"
 ARG UPLOADS_DIR="/opt/commander/library/"
 
