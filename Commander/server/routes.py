@@ -236,7 +236,7 @@ def login():
     adminAccount["sessions"].append(session)
     adminAccount.save()
     # return authentication token and expiration date
-    return {"token": newToken, "expires": str(expiration)}, 200
+    return {"token": newToken, "expires": expiration}, 200
 
 
 @app.patch("/admin/login")

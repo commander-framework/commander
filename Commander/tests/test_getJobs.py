@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta
 import json
 from server import agentDB
-from utils import timestampToDatetime, utcNowTimestamp
+from utils import timestampToDatetime
 
 
 def testCheckinWithNoJobs(client, sample_Agent):
