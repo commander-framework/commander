@@ -26,7 +26,6 @@ def sample_Job():
 @pytest.fixture
 def sample_Library():
     library = Library(jobs=[])
-    library["jobs"].append(sample_Job)
     return library
 
 
