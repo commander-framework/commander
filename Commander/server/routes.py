@@ -11,7 +11,7 @@ from utils import timestampToDatetime, utcNowTimestamp
 def sendAgentInstaller():
     """ Fetch or generate an agent installer for the given operating system """
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}
     # check OS version
     targetOS = request.json["os"]
@@ -64,7 +64,7 @@ def assignJob():
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["hostname", "filename", "command"]):
         return {"error": missingParams}, 400
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # add job to agent's queue in db
     filename = request.json["filename"]
@@ -134,7 +134,7 @@ def getJobLibrary():
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         return {"error": missingParams}, 400
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     jobsQuery = Job.objects()
     return {"library": jobsQuery}
@@ -146,7 +146,7 @@ def addNewJob():
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename", "description", "os", "executor"]):
         return {"error": missingParams}, 400
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # generate library entry document
     if "file" not in request.files:
@@ -175,7 +175,7 @@ def updateJob():
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename"]):
         return {"error": missingParams}, 400
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # make sure job exists
     jobQuery = Job.objects(filename__exact=request.json["filename"])
@@ -202,7 +202,7 @@ def deleteJob():
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename"]):
         return {"error": missingParams}, 400
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}
     # make sure job exists
     jobQuery = Job.objects(filename__exact=request.json["filename"])
@@ -267,7 +267,7 @@ def getRegistrationKey():
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         return {"error": missingParams}, 400
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # return current key if one exists
     regKeyQuery = RegistrationKey.objects()
@@ -287,7 +287,7 @@ def updateRegistrationKey():
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         return {"error": missingParams}, 400
     # check admin authentication token
-    if authenticate(request.headers["Auth-Token"]) != request.headers["Username"]:
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # make sure a current key exists
     regKeyQuery = RegistrationKey.objects()
@@ -301,11 +301,15 @@ def updateRegistrationKey():
     return {"registration-key": newKey}
 
 
-def authenticate(authToken):
+def authenticate(authToken, username):
     """ If the given admin authentication token is valid return its username """
-    sessionQuery = Session.objects(authToken__exact=authToken)
+    userQuery = User.objects(username__exact=username)
+    if not userQuery:
+        return None
+    user = userQuery[0]
+    sessionQuery = list(filter(lambda session: session["authToken"] == authToken, user["sessions"]))
     if not sessionQuery:
-        return None  # ensures empty username doesn't authenticate
+        return None
     session = sessionQuery[0]
     if timestampToDatetime(session["expires"]) < datetime.utcnow():
         return None
