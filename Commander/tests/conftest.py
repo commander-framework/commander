@@ -68,10 +68,10 @@ def sample_expired_Session():
 def sample_User():
     salt = bcrypt.gensalt()
     samplePass = "samplePass"
-    hashedPass = bcrypt.hashpw(samplePass, salt)
+    hashedPass = bcrypt.hashpw(samplePass.encode(), salt)
     user = User(name="Test User",
                 username="testuser",
-                passwordHash=hashedPass,
+                passwordHash=hashedPass.decode(),
                 sessions=[])
     user["sessions"].append(sample_valid_Session)
     user["sessions"].append(sample_expired_Session)
