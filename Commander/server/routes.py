@@ -61,7 +61,7 @@ def checkForJobs():
 @app.post("/agent/jobs")
 def assignJob():
     """ Admin submitting a job -- add job to the specified agent's queue """
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["hostname", "filename", "argv"]):
+    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID", "filename", "argv"]):
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -77,11 +77,9 @@ def assignJob():
         return {"error": "the library contains no executable with the given filename"}, 400
     job = jobsQuery[0]
     # TODO: search by agent id if available, otherwise hostname
-    hostsQuery = Agent.objects(hostname__exact=request.json["hostname"])
+    hostsQuery = Agent.objects(agentID__exact=request.json["agentID"])
     if not hostsQuery:
-        return {"error": "no hosts found matching the hostname in the request"}, 400
-    if len(hostsQuery) > 1:
-        return {"error": "multiple agents found with the given hostname"}, 400
+        return {"error": "no hosts found matching the agentID in the request"}, 400
     agent = hostsQuery[0]
     job["user"] = request.headers["Username"]
     job["argv"] = argv
