@@ -39,5 +39,5 @@ def testCheckinWithJobs(client, sample_Agent, sample_Job):
     # make sure timeDispatched was created
     dispatchTimestamp = json.loads(response.json["job"])["timeDispatched"]
     dispatchTime = timestampToDatetime(dispatchTimestamp)
-    assert dispatchTime > createdTime
+    assert dispatchTime >= createdTime
     agentDB.drop_database("agents")
