@@ -40,21 +40,22 @@ def checkForJobs():
     if missingParams := missing(request, headers=["Agent-ID"]):
         return {"error": missingParams}, 400
     # check db for jobs
-    agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
+    agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
+        print("not found")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
-    jobsQueue = agent["jobsQueue"].objects().order_by("+timeSubmitted")
+    jobsQueue = sorted(agent["jobsQueue"], key = lambda i: i["timeCreated"])
     if not jobsQueue:
         return {"job": "no jobs"}, 200
     # get ready to send available job
     job = jobsQueue.pop(0)
     # move job to running queue
-    job["timeDispatched"] = datetime.now()
+    job["timeDispatched"] = datetime.utcnow()
     agent["jobsRunning"].append(job)
     agent.save()
     # send most recent job to agent
-    return {"job": json.dumps(job)}
+    return {"job": job.to_json()}, 200
 
 
 @app.post("/agent/jobs")
@@ -226,7 +227,7 @@ def login():
         return {"error": "password does not match"}, 403
     # generate session and set expiration
     newToken = bcrypt.gensalt().decode()[7:] + bcrypt.gensalt().decode()[7:]
-    expiration = datetime.now() + timedelta(hours=24)
+    expiration = datetime.utcnow() + timedelta(hours=24)
     session = Session(username=request.json["username"],
                       authToken=newToken,
                       expires=expiration)
@@ -261,7 +262,7 @@ def updateCredentials():
 
 
 @app.get("/admin/registration-key")
-def genRegistrationKey():
+def getRegistrationKey():
     """ Get or generate the registration key that agents need to register with commander """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         return {"error": missingParams}, 400
@@ -281,7 +282,7 @@ def genRegistrationKey():
 
 
 @app.patch("/admin/registration-key")
-def genRegistrationKey():
+def updateRegistrationKey():
     """ Generate and return a new registration key that agents need to register with commander """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         return {"error": missingParams}, 400
