@@ -10,7 +10,7 @@ def testCheckinWithNoJobs(client, sample_Agent):
     # check in with api server
     response = client.get("/agent/jobs",
                           headers={"Content-Type": "application/json",
-                                    "Agent-ID": "123456789"})
+                                    "Agent-ID": sample_Agent["agentID"]})
     assert response.status_code == 200
     assert response.json["job"] == "no jobs"
     agentDB.drop_database("agents")
@@ -24,7 +24,7 @@ def testCheckinWithJobs(client, sample_Agent, sample_Job):
     # check in with api server
     response = client.get("/agent/jobs",
                           headers={"Content-Type": "application/json",
-                                    "Agent-ID": "123456789"})
+                                    "Agent-ID": sample_Agent["agentID"]})
     assert response.status_code == 200
     # make sure all job fields were included from the sample job
     assert json.loads(response.json["job"])["executor"] == sample_Job["executor"]
