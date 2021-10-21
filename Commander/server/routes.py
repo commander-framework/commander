@@ -346,18 +346,18 @@ def missing(request, headers=None, data=None):
     if data:
         for field in data:
             if field not in request.json:
-                missingHeaders.append(field)
+                missingData.append(field)
     if not missingHeaders and not missingData:
         return None
     errMsg = "request is missing one or more of the following parameters: "
     if missingHeaders:
-        errMsg += "header['"
-        errMsg += "'], header['".join(headers)
+        errMsg += "headers=['"
+        errMsg += "', '".join(headers)
         errMsg += "']"
     if missingHeaders and missingData:
         errMsg += ", "
     if missingData:
-        errMsg += "data['"
-        errMsg += ", ".join(data)
+        errMsg += "data=['"
+        errMsg += "', '".join(data)
         errMsg += "']"
     return errMsg
