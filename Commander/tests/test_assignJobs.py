@@ -117,7 +117,7 @@ def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
     adminDB.drop_database("admins")
 
 
-def testBadHostnameAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
+def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
     # prepare mongomock with relevant sample documents
     user = sample_User
     user["sessions"].append(sample_valid_Session)
@@ -136,5 +136,25 @@ def testBadHostnameAssignJob(client, sample_Job, sample_Library, sample_Agent, s
                                  "argv": []}))
     assert response.status_code == 400
     assert response.json["error"] == "no hosts found matching the agentID in the request"
+    agentDB.drop_database("agents")
+    adminDB.drop_database("admins")
+
+
+def testMissingFieldsAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
+    # prepare mongomock with relevant sample documents
+    user = sample_User
+    user["sessions"].append(sample_valid_Session)
+    user.save()
+    agent = sample_Agent
+    agent.save()
+    library = sample_Library
+    library["jobs"].append(sample_Job)
+    library.save()
+    # send job to api
+    response = client.post("/agent/jobs",
+                           headers={"Content-Type": "application/json"},
+                           data=json.dumps({}))
+    assert response.status_code == 400
+    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Auth-Token', 'Username'], data=['agentID', 'filename', 'argv']"
     agentDB.drop_database("agents")
     adminDB.drop_database("admins")

@@ -3,7 +3,7 @@ from server import agentDB
 from utils import timestampToDatetime
 
 
-def testCheckinWithNoJobs(client, sample_Agent):
+def testNoJobsCheckin(client, sample_Agent):
     # prepare mongomock with relevant sample documents
     agent = sample_Agent
     agent.save()
@@ -16,7 +16,7 @@ def testCheckinWithNoJobs(client, sample_Agent):
     agentDB.drop_database("agents")
 
 
-def testCheckinWithJobs(client, sample_Agent, sample_Job):
+def testAvailableJobCheckin(client, sample_Agent, sample_Job):
     # prepare mongomock with relevant sample documents
     agent = sample_Agent
     agent["jobsQueue"].append(sample_Job)
@@ -39,4 +39,16 @@ def testCheckinWithJobs(client, sample_Agent, sample_Job):
     dispatchTimestamp = json.loads(response.json["job"])["timeDispatched"]
     dispatchTime = timestampToDatetime(dispatchTimestamp)
     assert dispatchTime >= createdTime
+    agentDB.drop_database("agents")
+
+
+def testMissingFieldsCheckin(client, sample_Agent):
+    # prepare mongomock with relevant sample documents
+    agent = sample_Agent
+    agent.save()
+    # check in with api server
+    response = client.get("/agent/jobs",
+                          headers={"Content-Type": "application/json"})
+    assert response.status_code == 400
+    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID']"
     agentDB.drop_database("agents")
