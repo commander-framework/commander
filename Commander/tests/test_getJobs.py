@@ -52,3 +52,16 @@ def testMissingFieldsCheckin(client, sample_Agent):
     assert response.status_code == 400
     assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID']"
     agentDB.drop_database("agents")
+
+
+def testUnknownAgentCheckin(client, sample_Agent):
+    # prepare mongomock with relevant sample documents
+    agent = sample_Agent
+    agent.save()
+    # check in with api server
+    response = client.get("/agent/jobs",
+                          headers={"Content-Type": "application/json",
+                                    "Agent-ID": "not_an_agent"})
+    assert response.status_code == 400
+    assert response.json["error"] == "agentID not found"
+    agentDB.drop_database("agents")
