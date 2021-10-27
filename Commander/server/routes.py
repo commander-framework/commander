@@ -120,10 +120,10 @@ def collectJobResults():
     if not agentQuery:
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
-    jobRequestedQuery = agent["jobsRunning"].objects(filename__exact=request.json["job"]["filename"])
-    if not jobRequestedQuery:
+    jobRunningQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsRunning"]))
+    if not jobRunningQuery:
         return {"error": "no matching jobs were supposed to be running"}, 400
-    jobRequestedQuery.pop(0)
+    jobRunningQuery.pop(0)
     completedJob = Job(**request.json["job"])
     agent.jobsHistory.append(completedJob)
     agent.save()
