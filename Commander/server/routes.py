@@ -2,6 +2,7 @@ import bcrypt
 from datetime import datetime
 from flask import request, send_from_directory
 from .models import Agent, Job, Library, RegistrationKey, Session, User
+from os import path
 import requests
 from server import app
 from utils import timestampToDatetime, utcNowTimestamp
@@ -96,11 +97,14 @@ def sendExecutable():
     # check db for matching job
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
-        return {"error": "agent ID not found"}
+        return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsRunning"]))
     if not jobsQuery:
         return {"error": "no matching job available for download"}, 400
+    # make sure file exists
+    if not path.exists(app.config["UPLOADS_DIR"] + path.sep + jobsQuery[0]["filename"]):
+        return {"error": "job file missing -- please contact an administrator"}, 500
     # matching job found -- send executable to the agent
     return send_from_directory(directory=app.config["UPLOADS_DIR"],
                                path=jobsQuery[0]["filename"])
@@ -114,7 +118,7 @@ def collectJobResults():
     # check db for matching job
     agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
     if not agentQuery:
-        return {"error": "agent ID not found"}
+        return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     jobRequestedQuery = agent["jobsRunning"].objects(filename__exact=request.json["job"]["filename"])
     if not jobRequestedQuery:
