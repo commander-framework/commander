@@ -1,6 +1,6 @@
 import bcrypt
 from datetime import datetime
-from flask import request, send_file
+from flask import request, send_from_directory
 from .models import Agent, Job, Library, RegistrationKey, Session, User
 import requests
 from server import app
@@ -94,17 +94,16 @@ def sendExecutable():
     if missingParams := missing(request, headers=["Agent-ID"], data=["filename"]):
         return {"error": missingParams}, 400
     # check db for matching job
-    agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
+    agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
         return {"error": "agent ID not found"}
     agent = agentQuery[0]
-    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsQueue"]))
-    jobRequestedQuery = agent["jobsRunning"].objects(filename__exact=request.json["filename"])
-    if not jobRequestedQuery:
+    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsRunning"]))
+    if not jobsQuery:
         return {"error": "no matching job available for download"}, 400
     # matching job found -- send executable to the agent
-    return send_file(jobRequestedQuery[0]["storagePath"],
-                     attachment_filename=jobRequestedQuery[0]["filename"])
+    return send_from_directory(directory=app.config["UPLOADS_DIR"],
+                               path=jobsQuery[0]["filename"])
 
 
 @app.post("/agent/execute")
