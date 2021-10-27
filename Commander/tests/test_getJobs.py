@@ -63,5 +63,5 @@ def testUnknownAgentCheckin(client, sample_Agent):
                           headers={"Content-Type": "application/json",
                                     "Agent-ID": "not_an_agent"})
     assert response.status_code == 400
-    assert response.json["error"] == "agentID not found"
+    assert response.json["error"] == "agent ID not found"
     agentDB.drop_database("agents")
