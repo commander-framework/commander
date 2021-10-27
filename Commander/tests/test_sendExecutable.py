@@ -63,7 +63,7 @@ def testNoJobGetExecutable(client, sample_Job, sample_JobFile, sample_Agent):
     agentDB.drop_database("agents")
 
 
-def testMissingFileGetExecutable(client, sample_Job, sample_JobFile, sample_Agent):
+def testMissingFileGetExecutable(client, sample_Job, sample_Agent):
     # prepare mongomock with relevant sample documents
     agent = sample_Agent
     job = sample_Job
