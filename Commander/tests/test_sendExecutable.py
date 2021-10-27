@@ -1,5 +1,5 @@
 import json
-from server import agentDB, adminDB
+from server import agentDB
 from utils import utcNowTimestamp
 
 
