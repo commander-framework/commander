@@ -26,7 +26,7 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
     # check in and make sure job is in agent's queue now
     response = client.get("/agent/jobs",
                           headers={"Content-Type": "application/json",
-                                    "Agent-ID": sample_Agent["agentID"]})
+                                   "Agent-ID": sample_Agent["agentID"]})
     assert response.status_code == 200
     # make sure all job fields were included from the sample job
     assert json.loads(response.json["job"])["executor"] == sample_Job["executor"]
