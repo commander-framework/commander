@@ -35,7 +35,7 @@ def registerNewAgent():
 
 
 @app.get("/agent/jobs")
-def checkForJobs():
+def getJobs():
     """ Agent checking in -- send file to be executed if a job is waiting """
     if missingParams := missing(request, headers=["Agent-ID"]):
         return {"error": missingParams}, 400
