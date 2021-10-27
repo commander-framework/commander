@@ -8,3 +8,5 @@ class Config(object):
     DB_URI = os.environ.get("DB_URI") or "mongomock://localhost"
     CA_HOSTNAME = os.environ.get("CA_HOSTNAME") or "CAPy.local"
     UPLOADS_DIR = os.environ.get("UPLOADS_DIR") or "/opt/commander/library/"
+    if UPLOADS_DIR[-1] != "/" and UPLOADS_DIR[-1] != "\\":
+        UPLOADS_DIR += os.path.sep
