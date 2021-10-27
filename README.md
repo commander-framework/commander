@@ -2,7 +2,8 @@
 
 A server and agent template with easy agent capability adding. (currently in Alpha/development phase)
 
-![Build/Tests](https://github.com/lawndoc/commander/actions/workflows/build-test.commander.yml/badge.svg)
+![Commander Build/Tests](https://github.com/lawndoc/commander/actions/workflows/build-test.commander.yml/badge.svg)
+![CAPy Build/Tests](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
 
 ## Out of the box features:
 
