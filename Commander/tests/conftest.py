@@ -1,15 +1,28 @@
 import bcrypt
-from datetime import datetime, timedelta
+import os
 import pytest
 from server import app
 from server.models import Job, Library, Agent, RegistrationKey, Session, User
+import tempfile
 from utils import utcNowTimestamp
 
 
 @pytest.fixture
 def client():
+    app.config["UPLOADS_DIR"] = tempfile.gettempdir() + os.path.sep
     app.testing = True
     yield app.test_client()
+
+
+@pytest.fixture
+def sample_JobFile():
+    tempdir = tempfile.gettempdir() + os.path.sep
+    with open(tempdir + "testfile", "wb") as f:
+        f.write(b'test content')
+    yield "testfile"
+    if os.path.isfile(tempdir + "testfile"):
+        os.remove(tempdir + "testfile")
+
 
 
 @pytest.fixture
