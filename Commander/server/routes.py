@@ -130,8 +130,6 @@ def collectJobResults():
     return {"success": "successfully saved job response"}, 200
 
 
-
-
 @app.get("/admin/library")
 def getJobLibrary():
     """ Return simplified library overview in json format """
