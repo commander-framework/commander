@@ -1,5 +1,5 @@
 import bcrypt
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import request, send_from_directory
 from .models import Agent, Job, Library, RegistrationKey, Session, User
 from os import path
@@ -36,7 +36,7 @@ def registerNewAgent():
 
 
 @app.get("/agent/jobs")
-def getJobs():
+def agentCheckin():
     """ Agent checking in -- send file to be executed if a job is waiting """
     if missingParams := missing(request, headers=["Agent-ID"]):
         return {"error": missingParams}, 400
@@ -110,8 +110,30 @@ def sendExecutable():
                                path=jobsQuery[0]["filename"])
 
 
+@app.get("/agent/execute")
+def getJobResults():
+    """ Get all jobs that have executed in the last 7 days, or optionally specify a different amount of time """
+    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID"]):
+        return {"error": missingParams}, 400
+    # check admin authentication token
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
+        return {"error": "invalid auth token or token expired"}, 403
+    # check db for matching agent
+    agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
+    if not agentQuery:
+        return {"error": "agent ID not found"}, 400
+    agent = agentQuery[0]
+    # get all jobs that have executed in the last 7 days (or specified time)
+    try:
+        daysAgo = int(request.args["daysAgo"])
+    except KeyError:
+        daysAgo = 7
+    jobHistoryQuery = list(filter(lambda job: timestampToDatetime(job["timeEnded"]) > datetime.utcnow() - timedelta(days=daysAgo), agent["jobsHistory"]))
+    return {"jobs": jobHistoryQuery}, 200
+
+
 @app.post("/agent/execute")
-def collectJobResults():
+def postJobResults():
     """ Job has been executed -- save output and return code """
     if missingParams := missing(request, headers=["Agent-ID"], data=["job"]):
         return {"error": missingParams}, 400
