@@ -5,7 +5,7 @@ from .models import Agent, Job, Library, RegistrationKey, Session, User
 from os import path
 import requests
 from server import app
-from utils import timestampToDatetime, utcNowTimestamp
+from utils import timestampToDatetime, utcNowTimestamp, convertDocsToJson
 
 
 @app.get("/agent/installer")
@@ -149,7 +149,9 @@ def getJobResults():
     except KeyError:
         daysAgo = 7
     jobHistoryQuery = list(filter(lambda job: timestampToDatetime(job["timeEnded"]) > datetime.utcnow() - timedelta(days=daysAgo), agent["jobsHistory"]))
-    return {"jobs": jobHistoryQuery}, 200
+    # convert to json
+    jobHistory = convertDocsToJson(jobHistoryQuery)
+    return {"jobs": jobHistory}, 200
 
 
 @app.get("/admin/library")

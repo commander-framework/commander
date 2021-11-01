@@ -16,3 +16,10 @@ def utcNowTimestamp(deltaDays=0, deltaHours=0, deltaMinutes=0, deltaSeconds=0):
                       minutes=deltaMinutes,
                       seconds=deltaSeconds)
     return str(datetime.timestamp(datetime.utcnow()+delta))+"Z"
+
+
+def convertDocsToJson(listOfDocuments):
+    jsonDocs = []
+    for doc in listOfDocuments:
+        jsonDocs.append(doc.to_json())
+    return jsonDocs
