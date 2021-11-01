@@ -139,7 +139,7 @@ def getJobResults():
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # check db for matching agent
-    agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
+    agentQuery = Agent.objects(agentID__exact=request.json["agentID"])
     if not agentQuery:
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
