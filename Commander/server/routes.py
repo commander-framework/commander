@@ -140,7 +140,7 @@ def postJobResults():
     if missingParams := missing(request, headers=["Agent-ID"], data=["job"]):
         return {"error": missingParams}, 400
     # check db for matching job
-    agentQuery = Agent.objects(id__exact=request.headers["Agent-ID"])
+    agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
