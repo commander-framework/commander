@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import request, send_from_directory
 import json
 from .models import Agent, Job, Library, RegistrationKey, Session, User
+from mongoengine import DoesNotExist
 from os import path
 import requests
 from server import app
@@ -164,7 +165,10 @@ def getJobLibrary():
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
-    library = Library.objects()[0]
+    try:
+        library = Library.objects().get()
+    except DoesNotExist:
+        return "", 204
     return {"library": library.to_json()}, 200
 
 
