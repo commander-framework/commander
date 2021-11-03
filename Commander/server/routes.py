@@ -49,7 +49,7 @@ def agentCheckin():
     agent = agentQuery[0]
     jobsQueue = sorted(agent["jobsQueue"], key = lambda i: i["timeCreated"])
     if not jobsQueue:
-        return {"job": "no jobs"}, 200
+        return "", 204
     # get ready to send available job
     job = jobsQueue.pop(0)
     # move job to running queue

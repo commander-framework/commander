@@ -11,8 +11,7 @@ def testNoJobsCheckin(client, sample_Agent):
     response = client.get("/agent/jobs",
                           headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]})
-    assert response.status_code == 200
-    assert response.json["job"] == "no jobs"
+    assert response.status_code == 204
     agentDB.drop_database("agents")
 
 
