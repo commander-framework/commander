@@ -164,8 +164,8 @@ def getJobLibrary():
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
-    jobsQuery = Library.objects()
-    return {"library": jobsQuery}
+    library = Library.objects()[0]
+    return {"library": library.to_json()}, 200
 
 
 @app.post("/admin/library")
