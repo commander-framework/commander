@@ -66,11 +66,8 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_Session, samp
     adminDB.drop_database("admins")
 
 
-def testUnknownAgentPostResults(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
+def testUnknownAgentPostResults(client, sample_Job, sample_Agent):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     job = sample_Job
     job["timeDispatched"] = utcNowTimestamp()
@@ -94,11 +91,8 @@ def testUnknownAgentPostResults(client, sample_Job, sample_Agent, sample_valid_S
     adminDB.drop_database("admins")
 
 
-def testMissingJobPostResults(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
+def testMissingJobPostResults(client, sample_Job, sample_Agent):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     job = sample_Job
     job["timeDispatched"] = utcNowTimestamp()
@@ -122,11 +116,8 @@ def testMissingJobPostResults(client, sample_Job, sample_Agent, sample_valid_Ses
     adminDB.drop_database("admins")
 
 
-def testMissingFieldsPostResults(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
+def testMissingFieldsPostResults(client, sample_Job, sample_Agent):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     job = sample_Job
     job["timeDispatched"] = utcNowTimestamp()
