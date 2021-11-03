@@ -58,6 +58,7 @@ def testNoJobsGetResults(client, sample_Job, sample_Agent, sample_valid_Session,
     user["sessions"].append(sample_valid_Session)
     user.save()
     agent = sample_Agent
+    # intentionally not adding job to agent history
     agent.save()
     # get finished jobs for sample agent from the api server
     response = client.get("/agent/history",
@@ -68,6 +69,9 @@ def testNoJobsGetResults(client, sample_Job, sample_Agent, sample_valid_Session,
     assert response.status_code == 200
     # make sure all job fields were included from the sample job
     assert len(jobsHistory := response.json["jobs"]) == 0
+    # clean up database for next test
+    agentDB.drop_database("agents")
+    adminDB.drop_database("admins")
 
 
 def testExpiredSessionGetResults(client, sample_Job, sample_Agent, sample_expired_Session, sample_User):
