@@ -1,6 +1,7 @@
 import bcrypt
 from datetime import datetime, timedelta
 from flask import request, send_from_directory
+import json
 from .models import Agent, Job, Library, RegistrationKey, Session, User
 from os import path
 import requests
@@ -144,11 +145,12 @@ def postJobResults():
     if not agentQuery:
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
-    jobRunningQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsRunning"]))
+    finishedJob = json.loads(request.json["job"])
+    jobRunningQuery = list(filter(lambda job: job["filename"] == finishedJob["filename"], agent["jobsRunning"]))
     if not jobRunningQuery:
         return {"error": "no matching jobs were supposed to be running"}, 400
-    jobRunningQuery.pop(0)
-    completedJob = Job(**request.json["job"])
+    agent.update(pull__jobsRunning=jobRunningQuery[0])
+    completedJob = Job(**finishedJob)
     agent.jobsHistory.append(completedJob)
     agent.save()
     return {"success": "successfully saved job response"}, 200
