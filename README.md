@@ -37,6 +37,6 @@ Admin actions include creating agent installers, managing the job library, and a
 
 ❌**Agent**: Agent and admin clients are pretty much in the design phase right now.
 
-✔️**CAPy**: The required capabilities from CAPy are fully implemented and tested.
+✔️**CAPy**: The required functionality from CAPy is fully implemented and tested.
 
 ❌**Web Proxy**: Configuration not started (plan to use nginx or apache container).
