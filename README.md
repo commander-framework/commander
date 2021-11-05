@@ -23,7 +23,7 @@ To add capabilities to your agent, you just need to add a job to the Library. A 
 
 Agents are coded to do nothing but check in for jobs which keeps the memory footprint low. When a job is sent to an agent, the agent will download what it needs, execute it, and delete it afterwards.
 
-(In the future, functionality will be added that enables agents to store persistent capabilities and background processes on the host side)
+(In the future, functionality will be added that enables agents to store persistent capabilities and background processes on the client side)
 
 ### Admin authentication
 
@@ -31,4 +31,4 @@ Admin actions include fetching agent installers, adding jobs to the Library, and
 
 ## Project status
 
-The required capabilities from CAPy are fully implemented and tested. The API server is about 90% implemented/prototyped and 70% tested. Agent and admin clients are pretty much in the design phase. The last thing needed to put everything together will be the web proxy (just going to use nginx or apache with prebuilt config).
+The required functionality from CAPy is fully implemented and tested. The API server is about 90% implemented/prototyped and 70% tested. Agent and admin clients are pretty much in the design phase. The last thing needed to put everything together will be the web proxy (just going to use nginx or apache with prebuilt config).
