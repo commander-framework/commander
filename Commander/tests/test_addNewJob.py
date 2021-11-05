@@ -18,6 +18,22 @@ def testAssignJob(client, sample_Job, sample_valid_Session, sample_User):
                            data=data)
     assert response.status_code == 200
     assert response.json["success"] == "successfully added new executable to the commander library"
+    # get library jobs to validate that job saved successfully
+    response = client.get("/admin/library",
+                           headers={"Content-Type": "application/json",
+                                    "Auth-Token": sample_valid_Session["authToken"],
+                                    "Username": sample_valid_Session["username"]},
+                           data=json.dumps({}))
+    assert response.status_code == 200
+    libraryDoc = json.loads(response.json["library"])
+    libraryJobs = libraryDoc["jobs"]
+    assert len(libraryJobs) == 1
+    assert libraryJobs[0]["executor"] == sample_Job["executor"]
+    assert libraryJobs[0]["filename"] == sample_Job["filename"]
+    assert libraryJobs[0]["description"] == sample_Job["description"]
+    assert libraryJobs[0]["os"] == sample_Job["os"]
+    assert libraryJobs[0]["user"] == sample_Job["user"]
+    assert libraryJobs[0]["timeCreated"] == sample_Job["timeCreated"]
     # clean up database for next test
     agentDB.drop_database("agents")
     adminDB.drop_database("admins")
