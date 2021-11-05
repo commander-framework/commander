@@ -1,6 +1,8 @@
 import io
 import json
+from os import sep
 from server import agentDB, adminDB
+from tempfile import gettempdir
 
 
 def testAssignJob(client, sample_Job, sample_valid_Session, sample_User):
@@ -34,6 +36,9 @@ def testAssignJob(client, sample_Job, sample_valid_Session, sample_User):
     assert libraryJobs[0]["os"] == sample_Job["os"]
     assert libraryJobs[0]["user"] == sample_Job["user"]
     assert libraryJobs[0]["timeCreated"] == sample_Job["timeCreated"]
+    # make sure file saved correctly
+    with open(gettempdir()+sep+sample_Job["filename"], "rb") as testfile:
+        assert testfile.read() == b"test content"
     # clean up database for next test
     agentDB.drop_database("agents")
     adminDB.drop_database("admins")
