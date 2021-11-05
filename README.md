@@ -1,4 +1,4 @@
-# commander
+![Commander Logo](resources/commanderLogo.png)
 
 A server and agent template with easy agent capability adding. (currently in Alpha/development phase -- see project status at the bottom)
 
