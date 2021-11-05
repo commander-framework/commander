@@ -175,7 +175,7 @@ def getJobLibrary():
 @app.post("/admin/library")
 def addNewJob():
     """ Add a new executable to the Commander library """
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename", "description", "os", "executor"]):
+    if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["job", "file"]):
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -183,13 +183,8 @@ def addNewJob():
     # generate library entry document
     if "file" not in request.files:
         return {"error": "file not uploaded with request"}, 400
-    filename = request.json["filename"]
-    libraryEntry = Job(filename=filename,
-                       description=request.json["description"],
-                       os=request.json["os"],
-                       executor=request.json["executor"],
-                       user=request.headers["Username"],
-                       timeSubmitted=utcNowTimestamp())
+    newJob = json.loads(request.form["job"])
+    libraryEntry = Job(**newJob)
     # create library if it doesn't already exist
     libraryQuery = Library.objects()
     if not libraryQuery:
@@ -198,12 +193,12 @@ def addNewJob():
     else:
         library = libraryQuery[0]
     # check if filename already exists in the library
-    jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
+    jobsQuery = list(filter(lambda job: job["filename"] == libraryEntry["filename"], library["jobs"]))
     if jobsQuery:
         return {"error": "file name already exists in the library"}, 400
     # save executable file to server and job entry to libary
     uploadedFile = request.files["file"]
-    uploadedFile.save(app.config["UPLOADS_DIR"], filename)
+    uploadedFile.save(app.config["UPLOADS_DIR"] + libraryEntry["filename"])
     library["jobs"].append(libraryEntry)
     library.save()
     return {"success": "successfully added new executable to the commander library"}, 200
@@ -377,6 +372,34 @@ def missing(request, headers=None, data=None):
     if data:
         for field in data:
             if field not in request.json:
+                missingData.append(field)
+    if not missingHeaders and not missingData:
+        return None
+    errMsg = "request is missing one or more of the following parameters: "
+    if missingHeaders:
+        errMsg += "headers=['"
+        errMsg += "', '".join(headers)
+        errMsg += "']"
+    if missingHeaders and missingData:
+        errMsg += ", "
+    if missingData:
+        errMsg += "data=['"
+        errMsg += "', '".join(data)
+        errMsg += "']"
+    return errMsg
+
+
+def missingJobForm(request, headers=None, data=None):
+    """ Return error message about missing paramaters if there are any """
+    missingHeaders = []
+    missingData = []
+    if headers:
+        for header in headers:
+            if header not in request.headers:
+                missingHeaders.append(header)
+    if data:
+        for field in data:
+            if field not in request.form and field not in request.files:
                 missingData.append(field)
     if not missingHeaders and not missingData:
         return None
