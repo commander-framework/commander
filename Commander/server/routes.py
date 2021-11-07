@@ -184,7 +184,10 @@ def addNewJob():
     if "file" not in request.files:
         return {"error": "file not uploaded with request"}, 400
     newJob = json.loads(request.form["job"])
-    libraryEntry = Job(**newJob)
+    try:
+        libraryEntry = Job(**newJob)
+    except:
+        return {"error": "new job didn't include all of the required fields"}, 400
     # create library if it doesn't already exist
     libraryQuery = Library.objects()
     if not libraryQuery:
