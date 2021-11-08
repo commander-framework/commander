@@ -86,4 +86,4 @@ def testMissingFieldsGetExecutable(client, sample_Job, sample_JobFile, sample_Ag
                            headers={"Content-Type": "application/json"},
                            data=json.dumps({}))
     assert response.status_code == 400
-    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID'], data=['filename']"
+    assert response.json["error"] == "request is missing the following parameters: headers=['Agent-ID'], data=['filename']"

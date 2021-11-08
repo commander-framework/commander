@@ -140,4 +140,4 @@ def testMissingFieldsGetResults(client, sample_Job, sample_Agent, sample_valid_S
                            headers={"Content-Type": "application/json"},
                            data=json.dumps({}))
     assert response.status_code == 400
-    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Auth-Token', 'Username'], data=['agentID']"
+    assert response.json["error"] == "request is missing the following parameters: headers=['Auth-Token', 'Username'], data=['agentID']"

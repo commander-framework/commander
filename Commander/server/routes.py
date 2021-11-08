@@ -378,7 +378,7 @@ def missing(request, headers=None, data=None):
                 missingData.append(field)
     if not missingHeaders and not missingData:
         return None
-    errMsg = "request is missing one or more of the following parameters: "
+    errMsg = "request is missing the following parameters: "
     if missingHeaders:
         errMsg += "headers=['"
         errMsg += "', '".join(headers)
@@ -406,7 +406,7 @@ def missingJobForm(request, headers=None, data=None):
                 missingData.append(field)
     if not missingHeaders and not missingData:
         return None
-    errMsg = "request is missing one or more of the following parameters: "
+    errMsg = "request is missing the following parameters: "
     if missingHeaders:
         errMsg += "headers=['"
         errMsg += "', '".join(headers)

@@ -135,4 +135,4 @@ def testMissingFieldsNewJob(client, sample_valid_Session, sample_User):
                            headers={"Content-Type": "multipart/form-data"},
                            data=json.dumps({}))
     assert response.status_code == 400
-    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Auth-Token', 'Username'], data=['job', 'file']"
+    assert response.json["error"] == "request is missing the following parameters: headers=['Auth-Token', 'Username'], data=['job', 'file']"

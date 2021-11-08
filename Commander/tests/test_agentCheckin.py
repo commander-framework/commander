@@ -46,7 +46,7 @@ def testMissingFieldsCheckin(client, sample_Agent):
     response = client.get("/agent/jobs",
                           headers={"Content-Type": "application/json"})
     assert response.status_code == 400
-    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID']"
+    assert response.json["error"] == "request is missing the following parameters: headers=['Agent-ID']"
 
 
 def testUnknownAgentCheckin(client, sample_Agent):

@@ -124,4 +124,4 @@ def testMissingFieldsPostResults(client, sample_Job, sample_Agent):
                            headers={"Content-Type": "application/json"},
                            data=json.dumps({}))
     assert response.status_code == 400
-    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID'], data=['job']"
+    assert response.json["error"] == "request is missing the following parameters: headers=['Agent-ID'], data=['job']"
