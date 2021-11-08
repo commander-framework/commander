@@ -1,7 +1,6 @@
 import io
 import json
 from os import sep
-from server import agentDB, adminDB
 from tempfile import gettempdir
 
 
@@ -39,9 +38,6 @@ def testNewJob(client, sample_Job, sample_valid_Session, sample_User):
     # make sure file saved correctly
     with open(gettempdir()+sep+sample_Job["filename"], "rb") as testfile:
         assert testfile.read() == b"test content"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testExpiredSessionNewJob(client, sample_Job, sample_expired_Session, sample_User):
@@ -59,6 +55,3 @@ def testExpiredSessionNewJob(client, sample_Job, sample_expired_Session, sample_
                            data=data)
     assert response.status_code == 403
     assert response.json["error"] == "invalid auth token or token expired"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")

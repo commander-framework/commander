@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-from server import agentDB, adminDB
 from utils import utcNowTimestamp, timestampToDatetime
 
 
@@ -61,9 +60,6 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_Session, samp
                            data=json.dumps({"job": job.to_json()}))
     assert response.status_code == 400
     assert response.json["error"] == "no matching jobs were supposed to be running"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testUnknownAgentPostResults(client, sample_Job, sample_Agent):
@@ -86,9 +82,6 @@ def testUnknownAgentPostResults(client, sample_Job, sample_Agent):
                            data=json.dumps({"job": job.to_json()}))
     assert response.status_code == 400
     assert response.json["error"] == "agent ID not found"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testMissingJobPostResults(client, sample_Job, sample_Agent):
@@ -111,9 +104,6 @@ def testMissingJobPostResults(client, sample_Job, sample_Agent):
                            data=json.dumps({"job": job.to_json()}))
     assert response.status_code == 400
     assert response.json["error"] == "no matching jobs were supposed to be running"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testMissingFieldsPostResults(client, sample_Job, sample_Agent):
@@ -135,6 +125,3 @@ def testMissingFieldsPostResults(client, sample_Job, sample_Agent):
                            data=json.dumps({}))
     assert response.status_code == 400
     assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID'], data=['job']"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")

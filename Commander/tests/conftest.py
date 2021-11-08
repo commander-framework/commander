@@ -1,10 +1,18 @@
 import bcrypt
 import os
 import pytest
-from server import app
+from server import app, agentDB, adminDB
 from server.models import Job, Library, Agent, RegistrationKey, Session, User
 import tempfile
 from utils import utcNowTimestamp
+
+
+@pytest.fixture(autouse=True)
+def cleanup():
+    yield
+    # clean up database for next test
+    agentDB.drop_database("agents")
+    adminDB.drop_database("admins")
 
 
 @pytest.fixture

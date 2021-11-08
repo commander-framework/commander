@@ -1,5 +1,4 @@
 import json
-from server import agentDB, adminDB
 
 
 def testNoJobsGetLibary(client, sample_valid_Session, sample_User):
@@ -15,8 +14,6 @@ def testNoJobsGetLibary(client, sample_valid_Session, sample_User):
                                     "Username": sample_valid_Session["username"]},
                            data=json.dumps({}))
     assert response.status_code == 204
-    # clean up database for next test
-    adminDB.drop_database("admins")
 
 
 def testGetLibary(client, sample_Job, sample_Library, sample_valid_Session, sample_User):
@@ -43,9 +40,6 @@ def testGetLibary(client, sample_Job, sample_Library, sample_valid_Session, samp
     assert libraryJobs[0]["os"] == sample_Job["os"]
     assert libraryJobs[0]["user"] == sample_Job["user"]
     assert libraryJobs[0]["timeCreated"] == sample_Job["timeCreated"]
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testExpiredSessionGetLibary(client, sample_Job, sample_Library, sample_expired_Session, sample_User):
@@ -64,9 +58,6 @@ def testExpiredSessionGetLibary(client, sample_Job, sample_Library, sample_expir
                            data=json.dumps({}))
     assert response.status_code == 403
     assert response.json["error"] == "invalid auth token or token expired"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testMissingFieldsGetLibary(client, sample_Job, sample_Library, sample_valid_Session, sample_User):
@@ -83,6 +74,3 @@ def testMissingFieldsGetLibary(client, sample_Job, sample_Library, sample_valid_
                            data=json.dumps({}))
     assert response.status_code == 400
     assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Auth-Token', 'Username']"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")

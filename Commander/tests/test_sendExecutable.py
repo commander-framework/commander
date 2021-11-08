@@ -1,5 +1,4 @@
 import json
-from server import agentDB
 from utils import utcNowTimestamp
 
 
@@ -21,8 +20,6 @@ def testGetExecutable(client, sample_Job, sample_JobFile, sample_Agent):
     responseFilename = responseDisposition[responseDisposition.index("filename=") + 9:]
     assert responseFilename == job.filename
     assert response.data == b'test content'
-    # clean up database for next test
-    agentDB.drop_database("agents")
 
 
 def testUnknownAgentGetExecutable(client, sample_Job, sample_JobFile, sample_Agent):
@@ -40,8 +37,6 @@ def testUnknownAgentGetExecutable(client, sample_Job, sample_JobFile, sample_Age
                            data=json.dumps({"filename": job.filename}))
     assert response.status_code == 400
     assert response.json["error"] == "agent ID not found"
-    # clean up database for next test
-    agentDB.drop_database("agents")
 
 
 def testNoJobGetExecutable(client, sample_Job, sample_JobFile, sample_Agent):
@@ -59,8 +54,6 @@ def testNoJobGetExecutable(client, sample_Job, sample_JobFile, sample_Agent):
                            data=json.dumps({"filename": job.filename}))
     assert response.status_code == 400
     assert response.json["error"] == "no matching job available for download"
-    # clean up database for next test
-    agentDB.drop_database("agents")
 
 
 def testMissingFileGetExecutable(client, sample_Job, sample_Agent):
@@ -78,5 +71,3 @@ def testMissingFileGetExecutable(client, sample_Job, sample_Agent):
                            data=json.dumps({"filename": job.filename}))
     assert response.status_code == 500
     assert response.json["error"] == "job file missing -- please contact an administrator"
-    # clean up database for next test
-    agentDB.drop_database("agents")

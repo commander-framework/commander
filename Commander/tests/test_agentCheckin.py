@@ -1,5 +1,4 @@
 import json
-from server import agentDB
 from utils import timestampToDatetime
 
 
@@ -12,7 +11,6 @@ def testNoJobsCheckin(client, sample_Agent):
                           headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]})
     assert response.status_code == 204
-    agentDB.drop_database("agents")
 
 
 def testAvailableJobCheckin(client, sample_Agent, sample_Job):
@@ -38,7 +36,6 @@ def testAvailableJobCheckin(client, sample_Agent, sample_Job):
     dispatchTimestamp = json.loads(response.json["job"])["timeDispatched"]
     dispatchTime = timestampToDatetime(dispatchTimestamp)
     assert dispatchTime >= createdTime
-    agentDB.drop_database("agents")
 
 
 def testMissingFieldsCheckin(client, sample_Agent):
@@ -50,7 +47,6 @@ def testMissingFieldsCheckin(client, sample_Agent):
                           headers={"Content-Type": "application/json"})
     assert response.status_code == 400
     assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID']"
-    agentDB.drop_database("agents")
 
 
 def testUnknownAgentCheckin(client, sample_Agent):
@@ -63,4 +59,3 @@ def testUnknownAgentCheckin(client, sample_Agent):
                                     "Agent-ID": "not_an_agent"})
     assert response.status_code == 400
     assert response.json["error"] == "agent ID not found"
-    agentDB.drop_database("agents")

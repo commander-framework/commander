@@ -1,5 +1,4 @@
 import json
-from server import agentDB, adminDB
 from utils import timestampToDatetime
 
 
@@ -43,9 +42,6 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
     dispatchTimestamp = json.loads(response.json["job"])["timeDispatched"]
     dispatchTime = timestampToDatetime(dispatchTimestamp)
     assert dispatchTime >= createdTime
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testExpiredSessionAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_expired_Session, sample_User):
@@ -68,9 +64,6 @@ def testExpiredSessionAssignJob(client, sample_Job, sample_Library, sample_Agent
                                  "argv": []}))
     assert response.status_code == 403
     assert response.json["error"] == "invalid auth token or token expired"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
@@ -91,9 +84,6 @@ def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_Sessio
                                  "argv": []}))
     assert response.status_code == 400
     assert response.json["error"] == "there are no jobs in the library yet"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
@@ -116,9 +106,6 @@ def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
                                  "argv": []}))
     assert response.status_code == 400
     assert response.json["error"] == "the library contains no executable with the given filename"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
@@ -140,9 +127,6 @@ def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
                                  "argv": []}))
     assert response.status_code == 400
     assert response.json["error"] == "no hosts found matching the agentID in the request"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testMissingFieldsAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
@@ -161,6 +145,3 @@ def testMissingFieldsAssignJob(client, sample_Job, sample_Library, sample_Agent,
                            data=json.dumps({}))
     assert response.status_code == 400
     assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Auth-Token', 'Username'], data=['agentID', 'filename', 'argv']"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")

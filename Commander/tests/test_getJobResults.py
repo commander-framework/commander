@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-from server import agentDB, adminDB
 from utils import utcNowTimestamp, timestampToDatetime
 
 
@@ -47,9 +46,6 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_Session, sampl
     assert finishedJob["status"] == job["status"]
     assert finishedJob["stdout"] == job["stdout"]
     assert finishedJob["stderr"] == job["stderr"]
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testNoJobsGetResults(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
@@ -69,9 +65,6 @@ def testNoJobsGetResults(client, sample_Job, sample_Agent, sample_valid_Session,
     assert response.status_code == 200
     # make sure all job fields were included from the sample job
     assert len(jobsHistory := response.json["jobs"]) == 0
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testExpiredSessionGetResults(client, sample_Job, sample_Agent, sample_expired_Session, sample_User):
@@ -98,9 +91,6 @@ def testExpiredSessionGetResults(client, sample_Job, sample_Agent, sample_expire
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
     assert response.status_code == 403
     assert response.json["error"] == "invalid auth token or token expired"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testUnknownAgentGetResults(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
@@ -127,9 +117,6 @@ def testUnknownAgentGetResults(client, sample_Job, sample_Agent, sample_valid_Se
                            data=json.dumps({"agentID": "not_an_agent"}))
     assert response.status_code == 400
     assert response.json["error"] == "agent ID not found"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
 
 
 def testMissingFieldsGetResults(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
@@ -154,6 +141,3 @@ def testMissingFieldsGetResults(client, sample_Job, sample_Agent, sample_valid_S
                            data=json.dumps({}))
     assert response.status_code == 400
     assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Auth-Token', 'Username'], data=['agentID']"
-    # clean up database for next test
-    agentDB.drop_database("agents")
-    adminDB.drop_database("admins")
