@@ -184,10 +184,10 @@ def addNewJob():
     if "file" not in request.files:
         return {"error": "file not uploaded with request"}, 400
     newJob = json.loads(request.form["job"])
-    try:
-        libraryEntry = Job(**newJob)
-    except:
-        return {"error": "new job didn't include all of the required fields"}, 400
+    # make sure job includes all required fields
+    if missingFields := missingJobFields(newJob):
+        return {"error": missingFields}, 400
+    libraryEntry = Job(**newJob)
     # create library if it doesn't already exist
     libraryQuery = Library.objects()
     if not libraryQuery:
@@ -417,4 +417,19 @@ def missingJobForm(request, headers=None, data=None):
         errMsg += "data=['"
         errMsg += "', '".join(data)
         errMsg += "']"
+    return errMsg
+
+
+def missingJobFields(jobJson):
+    """ Return error message about missing job fields if there are any """
+    requiredFields = ["executor", "filename", "description", "os", "user", "timeCreated"]
+    missingFields = []
+    for field in requiredFields:
+        if field not in jobJson:
+            missingFields.append(field)
+    if not missingFields:
+        return None
+    errMsg = "the job in the request is missing the following fields: ['"
+    errMsg += "', '".join(missingFields)
+    errMsg += "']"
     return errMsg
