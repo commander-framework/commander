@@ -5,7 +5,7 @@ from server import agentDB, adminDB
 from tempfile import gettempdir
 
 
-def testAssignJob(client, sample_Job, sample_valid_Session, sample_User):
+def testNewJob(client, sample_Job, sample_valid_Session, sample_User):
     # prepare mongomock with relevant sample documents
     user = sample_User
     user["sessions"].append(sample_valid_Session)
