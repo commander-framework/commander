@@ -71,3 +71,19 @@ def testMissingFileGetExecutable(client, sample_Job, sample_Agent):
                            data=json.dumps({"filename": job.filename}))
     assert response.status_code == 500
     assert response.json["error"] == "job file missing -- please contact an administrator"
+
+
+def testMissingFieldsGetExecutable(client, sample_Job, sample_JobFile, sample_Agent):
+    # prepare mongomock with relevant sample documents
+    agent = sample_Agent
+    job = sample_Job
+    job.filename = sample_JobFile
+    job.timeDispatched = utcNowTimestamp()
+    agent["jobsRunning"].append(job)
+    agent.save()
+    # get job's executable from the api server
+    response = client.get("/agent/execute",
+                           headers={"Content-Type": "application/json"},
+                           data=json.dumps({}))
+    assert response.status_code == 400
+    assert response.json["error"] == "request is missing one or more of the following parameters: headers=['Agent-ID'], data=['filename']"
