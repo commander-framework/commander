@@ -8,6 +8,7 @@ from os import path, remove
 import requests
 from server import app
 from utils import timestampToDatetime, utcNowTimestamp, convertDocsToJson
+from uuid import uuid4
 
 
 @app.get("/agent/installer")
@@ -31,10 +32,22 @@ def sendAgentInstaller():
 @app.post("/agent/register")
 def registerNewAgent():
     """ Register a new agent with the commander server """
-    # TODO: check registration key
-    # TODO: add agent to db
-    # TODO: return agent ID
-    pass
+    if missingParams := missing(request, data=["registrationKey", "hostname", "os"]):
+        return {"error": missingParams}, 400
+    # check registration key
+    regKey = RegistrationKey.objects().first()
+    if not regKey:
+        return {"error": "no registration key has been generated yet"}, 500
+    if regKey["regKey"] != request.json["registrationKey"]:
+        return {"error": "invalild registration key"}, 401
+    # create agent doc and add it to the db
+    newAgent = Agent(hostname=request.json["hostname"],
+                     agentID=str(uuid4()),
+                     os=request.json["os"],
+                     lastCheckin=utcNowTimestamp())
+    newAgent.save()
+    # return agent ID
+    return {"agentID": newAgent["agentID"]}
 
 
 @app.get("/agent/jobs")
@@ -55,6 +68,7 @@ def agentCheckin():
     # move job to running queue
     job["timeDispatched"] = utcNowTimestamp()
     agent["jobsRunning"].append(job)
+    agent["lastCheckin"] = utcNowTimestamp()
     agent.save()
     # send most recent job to agent
     return {"job": job.to_json()}, 200
@@ -281,7 +295,7 @@ def login():
         # TODO: implement brute force protection
         return {"error": "password does not match"}, 401
     # generate session and set expiration
-    newToken = bcrypt.gensalt().decode()[7:] + bcrypt.gensalt().decode()[7:]
+    newToken = str(uuid4())
     expiration = utcNowTimestamp(deltaHours=24)
     session = Session(username=request.json["username"],
                       authToken=newToken,
@@ -361,7 +375,7 @@ def getRegistrationKey():
     if regKeyQuery:
         return {"registration-key": regKeyQuery[0]["regKey"]}
     # create registration key in db
-    newKey = bcrypt.gensalt().decode()[7:] + bcrypt.gensalt().decode()[7:]
+    newKey = str(uuid4())
     regKey = RegistrationKey(regKey=newKey)
     regKey.save()
     # return new key
@@ -383,7 +397,7 @@ def updateRegistrationKey():
     else:
         regKey = regKeyQuery[0]
     # update the registration key and save to db
-    newKey = bcrypt.gensalt().decode()[7:] + bcrypt.gensalt().decode()[7:]
+    newKey = str(uuid4())
     regKey["regKey"] = newKey
     regKey.save()
     # return new key
