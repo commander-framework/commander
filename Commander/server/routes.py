@@ -274,7 +274,7 @@ def login():
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
     if not adminQuery:
-        return {"error": "username not found"}, 400
+        return {"error": "username not found"}, 401
     adminAccount = adminQuery[0]
     # hash password and check match
     if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["hashedPassword"].encode()):
