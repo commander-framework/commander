@@ -5,6 +5,7 @@ from server import app, agentDB, adminDB
 from server.models import Job, Library, Agent, RegistrationKey, Session, User
 import tempfile
 from utils import utcNowTimestamp
+from uuid import uuid4
 
 
 @pytest.fixture(autouse=True)
@@ -64,7 +65,7 @@ def sample_Agent():
 
 @pytest.fixture
 def sample_RegistrationKey():
-    regKey = RegistrationKey(regKey="abcdef123456")
+    regKey = RegistrationKey(regKey=str(uuid4()))
     return regKey
 
 
