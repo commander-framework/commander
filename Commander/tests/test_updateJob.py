@@ -64,7 +64,7 @@ def testExpiredSessionUpdateJob(client, sample_Job, sample_JobFile, sample_Libra
                                     "Auth-Token": sample_expired_Session["authToken"],
                                     "Username": sample_expired_Session["username"]},
                            data=data)
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json["error"] == "invalid auth token or token expired"
 
 

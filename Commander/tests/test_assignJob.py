@@ -62,7 +62,7 @@ def testExpiredSessionAssignJob(client, sample_Job, sample_Library, sample_Agent
                            data=json.dumps({"agentID": sample_Agent["agentID"],
                                  "filename": sample_Job["filename"],
                                  "argv": []}))
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json["error"] == "invalid auth token or token expired"
 
 

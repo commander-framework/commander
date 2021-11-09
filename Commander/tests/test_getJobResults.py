@@ -89,7 +89,7 @@ def testExpiredSessionGetResults(client, sample_Job, sample_Agent, sample_expire
                                     "Auth-Token": sample_expired_Session["authToken"],
                                     "Username": sample_expired_Session["username"]},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json["error"] == "invalid auth token or token expired"
 
 

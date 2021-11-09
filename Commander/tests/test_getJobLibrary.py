@@ -56,7 +56,7 @@ def testExpiredSessionGetLibary(client, sample_Job, sample_Library, sample_expir
                                     "Auth-Token": sample_expired_Session["authToken"],
                                     "Username": sample_expired_Session["username"]},
                            data=json.dumps({}))
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json["error"] == "invalid auth token or token expired"
 
 

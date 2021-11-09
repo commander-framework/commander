@@ -67,7 +67,7 @@ def assignJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # add job to agent's queue in db
     filename = request.json["filename"]
     argv = request.json["argv"]   # TODO: error handling (should be list of strings)
@@ -119,7 +119,7 @@ def getJobResults():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # check db for matching agent
     agentQuery = Agent.objects(agentID__exact=request.json["agentID"])
     if not agentQuery:
@@ -164,7 +164,7 @@ def getJobLibrary():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     try:
         library = Library.objects().get()
     except DoesNotExist:
@@ -179,7 +179,7 @@ def addNewJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # generate library entry document
     if "file" not in request.files:
         return {"error": "file not uploaded with request"}, 400
@@ -214,7 +214,7 @@ def updateJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # make sure library exists
     library = Library.objects().first()
     if not library:
@@ -246,7 +246,7 @@ def deleteJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # make sure job exists
     library = Library.objects().first()
     if not library:
@@ -355,7 +355,7 @@ def getRegistrationKey():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # return current key if one exists
     regKeyQuery = RegistrationKey.objects()
     if regKeyQuery:
@@ -375,7 +375,7 @@ def updateRegistrationKey():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # make sure a current key exists
     regKeyQuery = RegistrationKey.objects()
     if regKeyQuery:
