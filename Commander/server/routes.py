@@ -216,11 +216,9 @@ def updateJob():
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 403
     # make sure library exists
-    libraryQuery = Library.objects()
-    if not libraryQuery:
-        return {"error": "there is no job library yet"}
-    else:
-        library = libraryQuery[0]
+    library = Library.objects().first()
+    if not library:
+        return {"error": "there is no job library yet"}, 400
     # make sure job exists
     jobsQuery = list(filter(lambda job: job["filename"] == request.form["filename"], library["jobs"]))
     if not jobsQuery:
@@ -238,7 +236,7 @@ def updateJob():
         job["description"] = request.form["description"]
         job["timeCreated"] = utcNowTimestamp()
         library.save()
-    return {"success": "successfully updated the job in the library"}
+    return {"success": "successfully updated the job in the library"}, 200
 
 
 @app.delete("/admin/library")
