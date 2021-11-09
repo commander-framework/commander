@@ -4,7 +4,7 @@ from flask import request, send_from_directory
 import json
 from .models import Agent, Job, Library, RegistrationKey, Session, User
 from mongoengine import DoesNotExist
-from os import path
+from os import path, remove
 import requests
 from server import app
 from utils import timestampToDatetime, utcNowTimestamp, convertDocsToJson
@@ -246,19 +246,24 @@ def deleteJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}
+        return {"error": "invalid auth token or token expired"}, 403
     # make sure job exists
     library = Library.objects().first()
     if not library:
         return {"error": "there are no jobs in the library yet"}, 400
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
     if not jobsQuery:
-        return {"error": "no existing job with that file name"}
-    # TODO: delete executable from file system
-    # remove existing library entry in db
+        return {"error": "no existing job with that file name"}, 400
     job = jobsQuery[0]
-    job.delete()
-    job.save()
+    # delete executable from file system
+    if path.isfile(app.config["UPLOADS_DIR"] + request.json["filename"]):
+        remove(app.config["UPLOADS_DIR"] + request.json["filename"])
+    # remove existing library entry in db
+    library.update(pull__jobs=job)
+    # remove library if empty
+    if not Library.objects().first()["jobs"]:
+        library.delete()
+    return {"success": "successfully deleted the job from the library"}, 200
 
 
 @app.post("/admin/login")
