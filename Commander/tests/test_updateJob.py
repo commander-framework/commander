@@ -86,15 +86,17 @@ def testNoLibraryUpdateJob(client, sample_Job, sample_valid_Session, sample_User
     assert response.json["error"] == "there is no job library yet"
 
 
-def testBadFilenameUpdateJob(client, sample_Job, sample_Library, sample_valid_Session, sample_User):
+def testBadFilenameUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_Session, sample_User):
     # prepare mongomock with relevant sample documents
     user = sample_User
     user["sessions"].append(sample_valid_Session)
     user.save()
+    jobFile = sample_JobFile  # creates existing job file in temp directory
     library = sample_Library
+    library["jobs"].append(sample_Job)
     library.save()
     # update existing job in the library
-    data = {"filename": sample_Job["filename"],
+    data = {"filename": "not_a_job_filename",
             "description": "updated description",
             "file": (io.BytesIO(b"updated content"), "testfile")}
     response = client.patch("/admin/library",
