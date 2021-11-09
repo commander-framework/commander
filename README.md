@@ -1,6 +1,6 @@
 ![Commander Logo](resources/commanderLogo.png)
 
-A server and agent template with easy agent capability adding.
+A endpoint agent framework with easy capability adding.
 
 (currently in Alpha/development phase -- see project status at the bottom)
 
@@ -11,13 +11,16 @@ A server and agent template with easy agent capability adding.
 
 ### 🏗️ Modular capability adding
 
-To add capabilities to your agent, you just need to add a job to the Library. A job can be an executable file or script, and can include many additional files and directories needed during execution.
+Capabilities can be added in the following forms:
+- **On-demand job** (first to be implemented)
+- **Scheduled task** (future roadmap)
+- **Service** (future roadmap)
+
+The server maintains a library of jobs, tasks, and services that can be assigned to an agent. All capabilities are stored in a zipped archive with an executable file or script, and can include many additional files and directories needed during execution.
 
 ### ⚡ Lightweight agent
 
-Agents are coded to do nothing but check in for jobs which keeps the CPU and memory footprint low. When a job is sent to an agent, the agent will download what it needs, execute it, and delete it afterwards.
-
-(In the future, functionality will be added that enables agents to optionally store jobs locally as scheduled tasks or services)
+By default, agents are programmed to do nothing but check in for new jobs, tasks, and services. This keeps the CPU and memory footprint low. When a job is sent to an agent, the agent will download what it needs, execute it, and delete it afterwards. Scheduled tasks and services will require agents to store files locally, and services will increase base resource utilization.
 
 ### 🔒 TLS encryption
 
@@ -33,9 +36,11 @@ Admin actions include creating agent installers, managing the job library, and a
 
 ## *Project status: Alpha/development*
 
-🚧**API Server**: The API server is about 90% implemented/prototyped and about 85% tested.
+🚧**API Server**: The API server is about 95% implemented and tested. Last bit relies on final Agent implemenation.
 
-❌**Agent**: Agent and admin clients are pretty much in the design phase right now.
+🚧**Agent**: Agent is about 10% implemented (not tested). *Currently focusing on this.*
+
+🚧**Admin**: Admin client is about 25% implemented (not tested). 
 
 ✔️**CAPy**: The required functionality from CAPy is fully implemented and tested.
 
