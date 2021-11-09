@@ -33,7 +33,7 @@ Admin actions include creating agent installers, managing the job library, and a
 
 ## *Project status: Alpha/development*
 
-🚧**API Server**: The API server is about 90% implemented/prototyped and about 70% tested.
+🚧**API Server**: The API server is about 90% implemented/prototyped and about 85% tested.
 
 ❌**Agent**: Agent and admin clients are pretty much in the design phase right now.
 
