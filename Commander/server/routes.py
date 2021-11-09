@@ -368,7 +368,7 @@ def getRegistrationKey():
     return {"registration-key": newKey}
 
 
-@app.patch("/admin/registration-key")
+@app.put("/admin/registration-key")
 def updateRegistrationKey():
     """ Generate and return a new registration key that agents need to register with commander """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
@@ -378,9 +378,11 @@ def updateRegistrationKey():
         return {"error": "invalid auth token or token expired"}, 401
     # make sure a current key exists
     regKeyQuery = RegistrationKey.objects()
-    if regKeyQuery:
+    if not regKeyQuery:
+        regKey = RegistrationKey(regKey="placeholder")
+    else:
         regKey = regKeyQuery[0]
-    # create registration key in db
+    # update the registration key and save to db
     newKey = bcrypt.gensalt().decode()[7:] + bcrypt.gensalt().decode()[7:]
     regKey["regKey"] = newKey
     regKey.save()
