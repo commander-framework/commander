@@ -420,13 +420,13 @@ def missing(request, headers=None, data=None):
     errMsg = "request is missing the following parameters: "
     if missingHeaders:
         errMsg += "headers=['"
-        errMsg += "', '".join(headers)
+        errMsg += "', '".join(missingHeaders)
         errMsg += "']"
     if missingHeaders and missingData:
         errMsg += ", "
     if missingData:
         errMsg += "data=['"
-        errMsg += "', '".join(data)
+        errMsg += "', '".join(missingData)
         errMsg += "']"
     return errMsg
 
@@ -448,13 +448,13 @@ def missingJobForm(request, headers=None, data=None):
     errMsg = "request is missing the following parameters: "
     if missingHeaders:
         errMsg += "headers=['"
-        errMsg += "', '".join(headers)
+        errMsg += "', '".join(missingHeaders)
         errMsg += "']"
     if missingHeaders and missingData:
         errMsg += ", "
     if missingData:
         errMsg += "data=['"
-        errMsg += "', '".join(data)
+        errMsg += "', '".join(missingData)
         errMsg += "']"
     return errMsg
 
