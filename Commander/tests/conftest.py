@@ -54,7 +54,7 @@ def sample_Library():
 @pytest.fixture
 def sample_Agent():
     agent = Agent(hostname="testhost",
-                  agentID="123456789",
+                  agentID=str(uuid4()),
                   os="windows",
                   lastCheckin=utcNowTimestamp(),
                   jobsQueue=[],
@@ -72,7 +72,7 @@ def sample_RegistrationKey():
 @pytest.fixture
 def sample_valid_Session():
     session = Session(username="testuser",
-                      authToken="abcdef123456",
+                      authToken=str(uuid4()),
                       expires=utcNowTimestamp(deltaHours=1))
     return session
 
@@ -80,7 +80,7 @@ def sample_valid_Session():
 @pytest.fixture
 def sample_expired_Session():
     session = Session(username="testuser",
-                      authToken="123456abcdef",
+                      authToken=str(uuid4()),
                       expires=utcNowTimestamp(deltaHours=-1))
     return session
 
