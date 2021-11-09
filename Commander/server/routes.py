@@ -277,16 +277,15 @@ def login():
         return {"error": "username not found"}, 401
     adminAccount = adminQuery[0]
     # hash password and check match
-    if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["hashedPassword"].encode()):
+    if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["passwordHash"].encode()):
         # TODO: implement brute force protection
-        return {"error": "password does not match"}, 403
+        return {"error": "password does not match"}, 401
     # generate session and set expiration
     newToken = bcrypt.gensalt().decode()[7:] + bcrypt.gensalt().decode()[7:]
     expiration = utcNowTimestamp(deltaHours=24)
     session = Session(username=request.json["username"],
                       authToken=newToken,
                       expires=expiration)
-    session.save()
     # add session to admin's session history
     adminAccount["sessions"].append(session)
     adminAccount.save()
@@ -305,7 +304,7 @@ def updateCredentials():
         return {"error": "username not found"}, 400
     adminAccount = adminQuery[0]
     # hash password and check match
-    if not bcrypt.checkpw(request.json["password"], adminAccount["hashedPassword"]):
+    if not bcrypt.checkpw(request.json["password"], adminAccount["passwordHash"]):
         # TODO: implement brute force protection
         return {"error": "password does not match"}, 403
     # change password and save to the database
@@ -314,6 +313,17 @@ def updateCredentials():
     adminAccount["passwordHash"] = hashedPassword
     adminAccount.save()
     return {"success": "successfully changed the password for your account"}, 200
+
+
+@app.get("/admin/authenticate")
+def testAuthentication():
+    """ Authenticate using session token to test and see if it is still valid """
+    if missingParams := missing(request, headers=["Auth-Token", "Username"]):
+        return {"error": missingParams}, 400
+    # check admin authentication token
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
+        return {"error": "invalid auth token or token expired"}, 403
+    return {"success": "authentication token is valid"}, 200
 
 
 @app.get("/admin/registration-key")
