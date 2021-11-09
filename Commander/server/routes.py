@@ -301,16 +301,38 @@ def updateCredentials():
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
     if not adminQuery:
-        return {"error": "username not found"}, 400
+        return {"error": "username not found"}, 401
     adminAccount = adminQuery[0]
     # hash password and check match
-    if not bcrypt.checkpw(request.json["password"], adminAccount["passwordHash"]):
+    if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["passwordHash"].encode()):
         # TODO: implement brute force protection
-        return {"error": "password does not match"}, 403
+        return {"error": "password does not match"}, 401
     # change password and save to the database
     salt = bcrypt.gensalt()
     hashedPassword = bcrypt.hashpw(request.json["newPassword"].encode(), salt)
     adminAccount["passwordHash"] = hashedPassword
+    adminAccount.save()
+    return {"success": "successfully changed the password for your account"}, 200
+
+
+@app.post("/admin/account")
+def newAdmin():
+    """ Authenticate an admin and update that admin's credentials """
+    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["username", "password", "name"]):
+        return {"error": missingParams}, 400
+    # check admin authentication token
+    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
+        return {"error": "invalid auth token or token expired"}, 403
+    # make sure username doesn't already exist
+    adminQuery = User.objects(username__exact=request.json["username"])
+    if adminQuery:
+        return {"error": "username already taken"}, 400
+    # hash password and save to the database
+    salt = bcrypt.gensalt()
+    hashedPassword = bcrypt.hashpw(request.json["password"].encode(), salt)
+    adminAccount = User(name=request.json["name"],
+                        username=request.json["username"],
+                        passwordHash=hashedPassword)
     adminAccount.save()
     return {"success": "successfully changed the password for your account"}, 200
 
