@@ -210,7 +210,7 @@ def addNewJob():
 @app.patch("/admin/library")
 def updateJob():
     """ Update the file or description of an existing entry in the commander library """
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename"]):
+    if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["filename"]):
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
