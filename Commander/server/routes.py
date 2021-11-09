@@ -317,12 +317,12 @@ def updateCredentials():
 
 @app.post("/admin/account")
 def newAdmin():
-    """ Authenticate an admin and update that admin's credentials """
+    """ Create a new admin account using valid session """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["username", "password", "name"]):
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     # make sure username doesn't already exist
     adminQuery = User.objects(username__exact=request.json["username"])
     if adminQuery:
@@ -334,7 +334,7 @@ def newAdmin():
                         username=request.json["username"],
                         passwordHash=hashedPassword)
     adminAccount.save()
-    return {"success": "successfully changed the password for your account"}, 200
+    return {"success": "successfully created new admin account"}, 200
 
 
 @app.get("/admin/authenticate")
