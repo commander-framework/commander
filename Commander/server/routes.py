@@ -310,7 +310,7 @@ def updateCredentials():
     # change password and save to the database
     salt = bcrypt.gensalt()
     hashedPassword = bcrypt.hashpw(request.json["newPassword"].encode(), salt)
-    adminAccount["passwordHash"] = hashedPassword
+    adminAccount["passwordHash"] = hashedPassword.decode()
     adminAccount.save()
     return {"success": "successfully changed the password for your account"}, 200
 
@@ -332,7 +332,7 @@ def newAdmin():
     hashedPassword = bcrypt.hashpw(request.json["password"].encode(), salt)
     adminAccount = User(name=request.json["name"],
                         username=request.json["username"],
-                        passwordHash=hashedPassword)
+                        passwordHash=hashedPassword.decode())
     adminAccount.save()
     return {"success": "successfully created new admin account"}, 200
 
