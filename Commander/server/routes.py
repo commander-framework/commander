@@ -344,7 +344,7 @@ def testAuthentication():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}, 403
+        return {"error": "invalid auth token or token expired"}, 401
     return {"success": "authentication token is valid"}, 200
 
 
