@@ -1,12 +1,16 @@
+from datetime import datetime
 import json
-from multiprocessing import Process
+import logging
+from multiprocessing import Process, Lock
+from platform import system
 import requests
 from socket import gethostname
 from time import sleep
 
 
 class CommanderAgent:
-    def __init__(self, serverAddress="", registrationKey=""):
+    def __init__(self, serverAddress="", registrationKey="", logLevel=3):
+        self.log = self.logInit(logLevel)
         self.clientCert = ("agentCert.crt", "agentKey.pem")
         self.serverCert = "commander.crt"
         self.commanderServer = serverAddress
@@ -20,6 +24,8 @@ class CommanderAgent:
         self.runner = Process(target=self.worker)
         self.exitSignal = False
         self.jobQueue = []
+        self.jobQueueLock = Lock()
+        self.connectedToServer = True
 
     def request(self, method, directory, body=None, headers=None, files=None):
         """ HTTPS request to Commander server using client and server verification """
@@ -77,8 +83,9 @@ class CommanderAgent:
             # contact server and register agent
             response = self.request("POST", "/agent/register",
                                     headers={"Content-Type": "application/json"},
-                                    body={"hostname": gethostname(),
-                                          "registrationKey": self.registrationKey})
+                                    body={"registrationKey": self.registrationKey,
+                                          "hostname": gethostname(),
+                                          "os": self.os})
             # create config and save to disk
             if "error" in response.json:
                 raise ValueError(response.json()["error"])
@@ -92,9 +99,22 @@ class CommanderAgent:
     def checkIn(self):
         """ Check in with the commander server to see if there are any jobs to run """
         while not self.exitSignal:
-            # TODO: send request to server
-            response = self.request("GET", "/agent/jobs",
-                                    body={""})
+            # send request to server
+            try:
+                response = self.request("GET", "/agent/jobs")
+            except:
+                if self.connectedToServer:
+                    self.log.warning(datetime.now(),":Unable to contact server")
+                    self.connectedToServer = False
+                sleep(5)
+                continue
+            if response.status_code != 200:
+                if self.connectedToServer:
+                    self.log.error(datetime.now(),":HTTP"+str(response.status_code)+":"+response.json["error"])
+                    self.connectedToServer = False
+                sleep(5)
+                continue
+            self.connectedToServer = True
             # TODO: download executable and create job
             sleep(5)
 
@@ -110,10 +130,33 @@ class CommanderAgent:
         """ Asynchronously execute jobs from commander server """
         while not self.exitSignal:
             if self.jobQueue:
-                job = Process(target=self.execute, args=(self.jobQueue[0]))
-                job.start()
-                self.jobQueue.pop(0)
-            sleep(3)
+                with self.jobQueueLock:
+                    job = Process(target=self.execute, args=(self.jobQueue.pop(0)))
+                    job.start()
+            sleep(5)
+
+    def logInit(self, logLevel):
+        """ Configure log level (1-5) and OS-dependent log file location """
+        # set log level
+        level = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL][5-logLevel]
+        logging.basicConfig(level=level)
+        log = logging.getLogger("CommanderAgent")
+        formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s",
+                                      datefmt="%Y-%m-%d %H:%M:%S")
+        os = system()
+        if os == "Linux" or os == "Darwin":
+            handler = logging.TimedRotatingFileHandler(filename="/var/log/commander.log",
+                                                   encoding="utf-8",
+                                                   when="D",  # Daily
+                                                   backupCount=7)
+        elif os == "Windows":
+            handler = logging.TimedRotatingFileHandler(filename="commander.log",
+                                                   encoding="utf-8",
+                                                   when="D",  # Daily
+                                                   backupCount=7)
+        handler.setFormatter(formatter)
+        log.addHandler(handler)
+        return log
 
     def run(self):
         """ Start agent """

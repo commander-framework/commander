@@ -1,11 +1,14 @@
 from datetime import datetime
 from getpass import getpass
 import json
+import logging
+from platform import system
 import requests
 
 
 class Administrator:
-    def __init__(self, commanderServer):
+    def __init__(self, commanderServer, logLevel):
+        self.log = self.logInit(logLevel)
         self.commanderServer = commanderServer
         self.clientCert = ("adminCert.crt", "adminKey.pem")
         self.serverCert = "commander.crt"
@@ -203,3 +206,26 @@ class Administrator:
             print("Please try again.")
         else:
             print(f"Successfully updated the description of {filename} in the Commander library.")
+
+    def logInit(self, logLevel):
+        """ Configure log level (1-5) and OS-dependent log file location """
+        # set log level
+        level = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL][5-logLevel]
+        logging.basicConfig(level=level)
+        log = logging.getLogger("CommanderAgent")
+        formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s",
+                                      datefmt="%Y-%m-%d %H:%M:%S")
+        os = system()
+        if os == "Linux" or os == "Darwin":
+            handler = logging.TimedRotatingFileHandler(filename="/var/log/commander.log",
+                                                   encoding="utf-8",
+                                                   when="D",  # Daily
+                                                   backupCount=7)
+        elif os == "Windows":
+            handler = logging.TimedRotatingFileHandler(filename="commander.log",
+                                                   encoding="utf-8",
+                                                   when="D",  # Daily
+                                                   backupCount=7)
+        handler.setFormatter(formatter)
+        log.addHandler(handler)
+        return log
