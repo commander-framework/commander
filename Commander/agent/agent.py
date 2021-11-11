@@ -1,6 +1,6 @@
-from datetime import datetime
 import json
 import logging
+from logging.handlers import TimedRotatingFileHandler
 from multiprocessing import Process, Lock
 from platform import system
 import requests
@@ -10,6 +10,7 @@ from time import sleep
 
 class CommanderAgent:
     def __init__(self, serverAddress="", registrationKey="", logLevel=3):
+        self.os = system()
         self.log = self.logInit(logLevel)
         self.clientCert = ("agentCert.crt", "agentKey.pem")
         self.serverCert = "commander.crt"
@@ -35,40 +36,50 @@ class CommanderAgent:
             body = {}  # set here to prevent mutating default arg
         if files is None:
             files = {}
-        if method == "GET":
-            response = requests.get(f"https://{self.commanderServer}{directory}",
-                                    headers=headers,
-                                    cert=self.clientCert,
-                                    verify=self.serverCert,
-                                    data=body)
-        elif method == "POST":
-            response = requests.post(f"https://{self.commanderServer}{directory}",
-                                     headers=headers,
-                                     cert=self.clientCert,
-                                     verify=self.serverCert,
-                                     data=body,
-                                     files=files)
-        elif method == "PUT":
-            response = requests.put(f"https://{self.commanderServer}{directory}",
-                                    headers=headers,
-                                    cert=self.clientCert,
-                                    verify=self.serverCert,
-                                    data=body,
-                                    files=files)
-        elif method == "DELETE":
-            response = requests.delete(f"https://{self.commanderServer}{directory}",
-                                       headers=headers,
-                                       cert=self.clientCert,
-                                       verify=self.serverCert,
-                                       data=body,
-                                       files=files)
-        else:  # method == "PATCH":
-            response = requests.patch(f"https://{self.commanderServer}{directory}",
-                                      headers=headers,
-                                      cert=self.clientCert,
-                                      verify=self.serverCert,
-                                      data=body,
-                                      files=files)
+        try:
+            if method == "GET":
+                response = requests.get(f"https://{self.commanderServer}{directory}",
+                                        headers=headers,
+                                        cert=self.clientCert,
+                                        verify=self.serverCert,
+                                        data=body)
+            elif method == "POST":
+                response = requests.post(f"https://{self.commanderServer}{directory}",
+                                        headers=headers,
+                                        cert=self.clientCert,
+                                        verify=self.serverCert,
+                                        data=body,
+                                        files=files)
+            elif method == "PUT":
+                response = requests.put(f"https://{self.commanderServer}{directory}",
+                                        headers=headers,
+                                        cert=self.clientCert,
+                                        verify=self.serverCert,
+                                        data=body,
+                                        files=files)
+            elif method == "DELETE":
+                response = requests.delete(f"https://{self.commanderServer}{directory}",
+                                        headers=headers,
+                                        cert=self.clientCert,
+                                        verify=self.serverCert,
+                                        data=body,
+                                        files=files)
+            else:  # method == "PATCH":
+                response = requests.patch(f"https://{self.commanderServer}{directory}",
+                                        headers=headers,
+                                        cert=self.clientCert,
+                                        verify=self.serverCert,
+                                        data=body,
+                                        files=files)
+        except ConnectionError:
+            # only log one failure until it connects again
+            if self.connectedToServer:
+                self.log.warning("Unable to contact server")
+                self.connectedToServer = False
+        except Exception as e:
+            self.log.critical(e)
+            exit(1)
+        self.connectedToServer = True
         return response
 
     def register(self):
@@ -84,11 +95,11 @@ class CommanderAgent:
             response = self.request("POST", "/agent/register",
                                     headers={"Content-Type": "application/json"},
                                     body={"registrationKey": self.registrationKey,
-                                          "hostname": gethostname(),
-                                          "os": self.os})
+                                            "hostname": gethostname(),
+                                            "os": self.os})
             # create config and save to disk
             if "error" in response.json:
-                raise ValueError(response.json()["error"])
+                self.log.error("HTTP"+str(response.status_code)+": "+response.json["error"])
             configJson = {"hostname": gethostname(),
                           "agentID": response.json()["agentID"],
                           "commanderServer": self.commanderServer}
@@ -98,23 +109,17 @@ class CommanderAgent:
 
     def checkIn(self):
         """ Check in with the commander server to see if there are any jobs to run """
+        logError = True
         while not self.exitSignal:
             # send request to server
-            try:
-                response = self.request("GET", "/agent/jobs")
-            except:
-                if self.connectedToServer:
-                    self.log.warning(datetime.now(),":Unable to contact server")
-                    self.connectedToServer = False
-                sleep(5)
-                continue
+            response = self.request("GET", "/agent/jobs")
             if response.status_code != 200:
-                if self.connectedToServer:
-                    self.log.error(datetime.now(),":HTTP"+str(response.status_code)+":"+response.json["error"])
-                    self.connectedToServer = False
+                if logError:
+                    self.log.error("HTTP"+str(response.status_code)+": "+response.json["error"])
+                    logError = False
                 sleep(5)
                 continue
-            self.connectedToServer = True
+            logError = True
             # TODO: download executable and create job
             sleep(5)
 
@@ -139,18 +144,17 @@ class CommanderAgent:
         """ Configure log level (1-5) and OS-dependent log file location """
         # set log level
         level = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL][5-logLevel]
-        logging.basicConfig(level=level)
+        logging.basicConfig(level=level, format="%(levelname)-8s: %(message)s")
         log = logging.getLogger("CommanderAgent")
         formatter = logging.Formatter(fmt="%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s",
                                       datefmt="%Y-%m-%d %H:%M:%S")
-        os = system()
-        if os == "Linux" or os == "Darwin":
-            handler = logging.TimedRotatingFileHandler(filename="/var/log/commander.log",
+        if self.os == "Linux" or self.os == "Darwin":
+            handler = TimedRotatingFileHandler(filename="/var/log/commander.log",
                                                    encoding="utf-8",
                                                    when="D",  # Daily
                                                    backupCount=7)
-        elif os == "Windows":
-            handler = logging.TimedRotatingFileHandler(filename="commander.log",
+        elif self.os == "Windows":
+            handler = TimedRotatingFileHandler(filename="commander.log",
                                                    encoding="utf-8",
                                                    when="D",  # Daily
                                                    backupCount=7)
