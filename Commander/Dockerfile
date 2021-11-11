@@ -67,4 +67,4 @@ ENV PATH="/home/myuser/venv/bin:$PATH"
 
 # /dev/shm is mapped to shared memory and should be used for gunicorn heartbeat
 # this will improve performance and avoid random freezes
-CMD ["gunicorn" "-b" "0.0.0.0:5000" "-w" "4" "-k" "gevent" "--worker-tmp-dir" "/dev/shm" "server:app"]
+CMD ["gunicorn","-b","0.0.0.0:5000","-w","4","-k","gevent","--worker-tmp-dir","/dev/shm","server:app"]
