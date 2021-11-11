@@ -1,5 +1,6 @@
 # Project specific
 commander.log
+volumes/
 
 # IDE metadata
 .idea/
