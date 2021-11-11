@@ -4,15 +4,13 @@ services:
     image: "nginx:stable"
     container_name: "nginx"
     volumes:
-      - nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - Nginx/nginx.conf:/etc/nginx/nginx.conf
     networks:
       - frontend
       - application
     ports:
       - "443:443"
     restart: always
-    environment:
-      - TZ=${TZ}
   commander:
     container_name: "commander"
     build:
@@ -30,10 +28,6 @@ services:
       - application
       - backend
     restart: always
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
   capy:
     container_name: "capy"
     build:
@@ -47,8 +41,6 @@ services:
     networks:
       - backend
     restart: always
-    environment:
-      - TZ=${TZ}
   mongo:
     image: "mongo:5"
     container_name: "mongo"
@@ -58,8 +50,8 @@ services:
       - backend
     restart: always
     environment:
-      - MONGO_INITDB_ROOT_USERNAME ${DB_USER}
-      - MONGO_INITDB_ROOT_PASSWORD ${DB_PASS}
+      - MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
 
 networks:
   frontend:
