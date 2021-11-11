@@ -1,0 +1,67 @@
+version: "3.9"
+services:
+  nginx:
+    image: "nginx:stable"
+    container_name: "nginx"
+    volumes:
+      - nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - frontend
+      - application
+    ports:
+      - "443:443"
+    restart: always
+    environment:
+      - TZ=${TZ}
+  commander:
+    container_name: "commander"
+    build:
+      context: ./Commander
+      args:
+        SECRET_KEY: ${SECRET_KEY}
+        DB_USER: ${DB_USER}
+        DB_PASS: ${DB_PASS}
+        DB_URI: mongodb://mongo
+        CA_HOSTNAME: "capy"
+        UPLOADS_DIR: "/opt/commander/library/"
+    volumes:
+      - volumes/commander:/opt/commander
+    networks:
+      - application
+      - backend
+    restart: always
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+  capy:
+    container_name: "capy"
+    build:
+      context: ./CAPy
+      args:
+        SECRET_KEY: ${SECRET_KEY}
+        CA_NAME: "Commander CA"
+        CA_CERT_DIR: "/opt/CAPy/CA"
+    volumes:
+      - volumes/capy:/opt/CAPy
+    networks:
+      - backend
+    restart: always
+    environment:
+      - TZ=${TZ}
+  mongo:
+    image: "mongo:5"
+    container_name: "mongo"
+    volumes:
+      - volumes/mongo:/data/db
+    networks:
+      - backend
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME ${DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD ${DB_PASS}
+
+networks:
+  frontend:
+  application:
+  backend:
