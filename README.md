@@ -36,9 +36,13 @@ Admin actions include creating agent installers, managing the job library, and a
 
 ## *Project status: Alpha/development*
 
+Right now I'm working on writing the deployment code for CAPy, Commander API, and the web proxy. Then I can troubleshoot network issues with the actual infrastructure when building the agent and admin client.
+
+### Individual components:
+
 🚧**API Server**: The API server is about 95% implemented and tested. Last bit relies on final Agent implemenation.
 
-🚧**Agent**: Agent is about 10% implemented (not tested). *Currently focusing on this.*
+🚧**Agent**: Agent is about 10% implemented (not tested).
 
 🚧**Admin**: Admin client is about 25% implemented (not tested). 
 
