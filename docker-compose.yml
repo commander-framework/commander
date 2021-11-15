@@ -1,51 +1,8 @@
 version: "3.9"
 services:
-  nginx:
-    image: "nginx:stable"
-    container_name: "nginx"
-    volumes:
-      - ./volumes/nginx:/etc/nginx
-    networks:
-      - frontend
-      - application
-    ports:
-      - "443:443"
-    restart: always
-  commander:
-    container_name: "commander"
-    build:
-      context: ./Commander
-      target: runner-image
-      args:
-        SECRET_KEY: ${SECRET_KEY}
-        DB_USER: ${DB_USER}
-        DB_PASS: ${DB_PASS}
-        DB_URI: mongodb://mongo
-        CA_HOSTNAME: "capy"
-        UPLOADS_DIR: "/opt/commander/library/"
-    volumes:
-      - ./volumes/commander:/opt/commander
-    networks:
-      - application
-      - backend
-    restart: always
-  capy:
-    container_name: "capy"
-    build:
-      context: ./CAPy
-      target: runner-image
-      args:
-        SECRET_KEY: ${SECRET_KEY}
-        CA_NAME: "Commander CA"
-        CA_CERT_DIR: "/opt/CAPy/CA"
-    volumes:
-      - ./volumes/capy:/opt/CAPy
-    networks:
-      - backend
-    restart: always
   mongo:
-    image: "mongo:5"
     container_name: "mongo"
+    image: "mongo:5"
     volumes:
       - ./volumes/mongo:/data/db
     networks:
@@ -54,6 +11,53 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+  capy:
+    container_name: "capy"
+    image: "ghcr.io/lawndoc/capy:main"
+    volumes:
+      - ./volumes/capy:/opt/CAPy/CA
+    networks:
+      - backend
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      CA_NAME: "Commander CA"
+      CA_CERT_DIR: "/opt/CAPy/CA"
+      FRONTEND_FQDN: ${FRONTEND_FQDN}
+    restart: always
+  commander:
+    container_name: "commander"
+    image: "ghcr.io/lawndoc/commander:main"
+    depends_on:
+      - mongo
+      - capy
+    volumes:
+      - ./volumes/commander/library:/opt/commander/library
+    networks:
+      - application
+      - backend
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_URI: mongodb://mongo
+      CA_HOSTNAME: "capy"
+      UPLOADS_DIR: "/opt/commander/library/"
+    restart: always
+  nginx:
+    container_name: "nginx"
+    image: "nginx:stable"
+    depends_on:
+      - commander
+      - capy
+    volumes:
+      - ./Nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./volumes/capy${HOSTNAME}:/opt/CA:ro
+    networks:
+      - frontend
+      - application
+    ports:
+      - "443:443"
+    restart: always
 
 networks:
   frontend:
