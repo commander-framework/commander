@@ -7,6 +7,9 @@ ARG PROXY_DOMAIN="example.com"
 ENV PROXY_DOMAIN=$PROXY_DOMAIN
 ENV DOLLAR='$'
 
+# generate secure diffie-hellman key
+RUN openssl dhparam -out /etc/nginx/dhparam.pem 2048
+
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginxconfig.io/ /etc/nginx/nginxconfig.io/
 
@@ -17,6 +20,3 @@ RUN envsubst < /etc/nginx/sites-available/${PROXY_DOMAIN}.conf.template > /etc/n
 
 # enable site
 RUN ln -s /etc/nginx/sites-available/${PROXY_DOMAIN}.conf /etc/nginx/sites-enabled/${PROXY_DOMAIN}.conf
-
-# generate secure diffie-hellman key
-RUN openssl dhparam -out /etc/nginx/dhparam.pem 4096
