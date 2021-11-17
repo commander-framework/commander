@@ -22,7 +22,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       CA_NAME: "Commander CA"
       CA_CERT_DIR: "/opt/CAPy/CA"
-      FRONTEND_FQDN: ${FRONTEND_FQDN}
+      PROXY_DOMAIN: ${PROXY_DOMAIN}
     restart: always
   commander:
     container_name: "commander"
@@ -50,13 +50,15 @@ services:
       - commander
       - capy
     volumes:
-      - ./Nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./Nginx:/etc/nginx
       - ./volumes/capy${HOSTNAME}:/opt/CA:ro
     networks:
       - frontend
       - application
     ports:
       - "443:443"
+    environment:
+      PROXY_DOMAIN: ${PROXY_DOMAIN}
     restart: always
 
 networks:
