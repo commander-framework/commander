@@ -13,20 +13,31 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
   capy:
     container_name: "capy"
-    image: "ghcr.io/lawndoc/capy:main"
+    build:
+      context: ./CAPy
+      target: runner-image
+      args:
+        SECRET_KEY: ${SECRET_KEY}
+        CA_NAME: "Commander CA"
+        CA_CERT_DIR: "/opt/CAPy/CA"
+        PROXY_DOMAIN: ${PROXY_DOMAIN}
     volumes:
       - ./volumes/capy:/opt/CAPy/CA
     networks:
       - backend
-    environment:
-      SECRET_KEY: ${SECRET_KEY}
-      CA_NAME: "Commander CA"
-      CA_CERT_DIR: "/opt/CAPy/CA"
-      PROXY_DOMAIN: ${PROXY_DOMAIN}
     restart: always
   commander:
     container_name: "commander"
-    image: "ghcr.io/lawndoc/commander:main"
+    build:
+      context: ./Commander
+      target: runner-image
+      args:
+        SECRET_KEY: ${SECRET_KEY}
+        DB_USER: ${DB_USER}
+        DB_PASS: ${DB_PASS}
+        DB_URI: mongodb://mongo
+        CA_HOSTNAME: "capy"
+        UPLOADS_DIR: "/opt/commander/library/"
     depends_on:
       - mongo
       - capy
@@ -35,30 +46,23 @@ services:
     networks:
       - application
       - backend
-    environment:
-      SECRET_KEY: ${SECRET_KEY}
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
-      DB_URI: mongodb://mongo
-      CA_HOSTNAME: "capy"
-      UPLOADS_DIR: "/opt/commander/library/"
     restart: always
   nginx:
     container_name: "nginx"
-    image: "nginx:stable"
+    build:
+      context: ./Nginx
+      args:
+        PROXY_DOMAIN: ${PROXY_DOMAIN}
     depends_on:
       - commander
       - capy
     volumes:
-      - ./Nginx:/etc/nginx
-      - ./volumes/capy${HOSTNAME}:/opt/CA:ro
+      - ./volumes/capy:/opt/CA:ro
     networks:
       - frontend
       - application
     ports:
       - "443:443"
-    environment:
-      PROXY_DOMAIN: ${PROXY_DOMAIN}
     restart: always
 
 networks:
