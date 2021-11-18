@@ -48,4 +48,6 @@ Right now I'm working on writing the deployment code for CAPy, Commander API, an
 
 ✔️**CAPy**: The required functionality from CAPy is fully implemented and tested.
 
-❌**Web Proxy**: Configuration not started (plan to use nginx or apache container).
+✔️**Nginx**: Nginx configuration is 100% implemented and tested.
+
+✔️**Docker**: Docker build and compose files are 100% implemented and tested.
