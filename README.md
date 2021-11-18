@@ -1,6 +1,6 @@
 ![Commander Logo](resources/commanderLogo.png)
 
-A endpoint agent framework with easy capability adding.
+An endpoint agent framework with easy capability adding.
 
 (currently in Alpha/development phase -- see project status at the bottom)
 
