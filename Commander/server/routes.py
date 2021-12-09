@@ -7,26 +7,74 @@ from mongoengine import DoesNotExist
 from os import path, remove
 import requests
 from server import app
+import shutil
 from utils import timestampToDatetime, utcNowTimestamp, convertDocsToJson
 from uuid import uuid4
+import zipfile
 
 
 @app.get("/agent/installer")
 def sendAgentInstaller():
     """ Fetch or generate an agent installer for the given operating system """
+    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["os"]):
+        return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        return {"error": "invalid auth token or token expired"}
-    # check OS version
+        return {"error": "invalid auth token or token expired"}, 401
+    # make sure OS is valid
     targetOS = request.json["os"]
     if targetOS not in ["linux", "windows"]:
-        return {"error": "the only supported agent architectures are linux and windows"}
-    # TODO: request installer client cert from CA
-    response = requests.get("http://" + app.config["CA_HOSTNAME"] + "/ca/host-certificate",
-                            headers={"Content-Type": "application/json"},
-                            data={"hostname": f"{targetOS}installer"})
-    # TODO: build executable installer
-    # TODO: return installer
+        return {"error": "the only supported agent architectures are linux and windows"}, 400
+    filename = targetOS + "Installer.zip"
+    # check what the latest version is
+    response = requests.get("https://github.com/lawndoc/commander/releases/latest/download/version.txt", allow_redirects=True)
+    if response.status_code != 200:
+        return {"error": "failed to get agent version information from GitHub"}, 500
+    version = response.content.decode("utf-8").strip()
+    # check if we have the newest installers
+    if not path.exists(f"agent/installers/{version}/{filename}"):
+        try:
+            getLatestAgentInstallers(version)
+        except Exception as e:
+            return {"error": str(e)}, 500
+    return send_from_directory(f"agent/installers/{version}/{filename}", filename=filename), 200
+
+
+def getLatestAgentInstallers(version):
+    """ Gets the latest agent installers from GitHub """
+    # get client cert from CAPy if we don't already have it
+    if not path.exists("agent/certs/client.crt") or not path.exists("agent/certs/client.key") or not path.exists("agent/certs/root.crt"):
+        response = requests.get("http://" + app.config["CA_HOSTNAME"] + "/ca/host-certificate",
+                                headers={"Content-Type": "application/json"},
+                                data={"hostname": "agent"})
+        if response.status_code != 200:
+            raise Exception("failed to get agent cert from CAPy")
+        with open("agent/certs/client.crt", "w") as f:
+            f.write(response.json["cert"])
+        with open("agent/certs/client.key", "w") as f:
+            f.write(response.json["key"])
+        with open("agent/certs/root.crt", "w") as f:
+            f.write(response.json["root"])
+    # get installers from GitHub
+    with requests.get(f"https://github.com/lawndoc/commander/releases/download/{version}/windowsInstaller.zip") as response:
+        if response.status_code != 200:
+            raise Exception("failed to get windows installer from GitHub")
+        with open(f"agent/installers/{version}/windowsInstaller.zip", 'wb') as f:
+            shutil.copyfileobj(response.raw, f)
+    with requests.get(f"https://github.com/lawndoc/commander/releases/download/{version}/linuxInstaller.zip") as response:
+        if response.status_code != 200:
+            raise Exception("failed to get linux installer from GitHub")
+        with open(f"agent/installers/{version}/linuxInstaller.zip", 'wb') as f:
+            shutil.copyfileobj(response.raw, f)
+    # add certs to installer zips
+    with zipfile.ZipFile(f"agent/installers/{version}/windowsInstaller.zip", 'a') as windowsZip:
+        windowsZip.write("agent/certs/client.crt", arcname="client.crt")
+        windowsZip.write("agent/certs/client.key", arcname="client.key")
+        windowsZip.write("agent/certs/root.crt", arcname="root.crt")
+    with zipfile.ZipFile(f"agent/installers/{version}/linuxInstaller.zip", 'a') as linuxZip:
+        linuxZip.write("agent/certs/client.crt", arcname="client.crt")
+        linuxZip.write("agent/certs/client.key", arcname="client.key")
+        linuxZip.write("agent/certs/root.crt", arcname="root.crt")
 
 
 @app.post("/agent/register")
