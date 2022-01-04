@@ -1,3 +1,3 @@
 #!/bin/sh
 
-pytest
+pytest --cov --cov-report=xml
