@@ -5,6 +5,8 @@ An endpoint agent framework with easy capability adding.
 (currently in Alpha/development phase -- see project status at the bottom)
 
 ![Commander Build/Tests](https://github.com/lawndoc/commander/actions/workflows/build-test.commander.yml/badge.svg)
+[![Commander Codecov](https://codecov.io/gh/lawndoc/commander/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/commander)
+
 ![CAPy Build/Tests](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
 
 ## Out of the box features:
