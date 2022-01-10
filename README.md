@@ -8,6 +8,7 @@ An endpoint agent framework with easy capability adding.
 [![Commander Codecov](https://codecov.io/gh/lawndoc/commander/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/commander)
 
 ![CAPy Build/Tests](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
+[![CAPy Codecov](https://codecov.io/gh/lawndoc/CAPy/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/CAPy)
 
 ## Out of the box features:
 
