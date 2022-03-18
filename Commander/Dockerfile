@@ -1,4 +1,6 @@
-### Builder image
+#####################
+### Builder image ###
+#####################
 # using ubuntu LTS version
 FROM ubuntu:20.04 AS builder-image
 
@@ -19,7 +21,9 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir wheel
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-### Runner image
+####################
+### Runner image ###
+####################
 FROM ubuntu:20.04 AS runner-image
 
 # DEFAULT ARGS that can be changed
@@ -29,6 +33,10 @@ ARG DB_PASS=""
 ARG DB_URI="mongomock://localhost/"
 ARG CA_HOSTNAME="CAPy.local"
 ARG UPLOADS_DIR="/opt/commander/library/"
+# specify WORKERS to match the number of CPU cores allocated to your container
+ARG WORKERS="4"
+# specify WORKER_CONNECTIONS to the number determined by (client_count/workers)*2
+ARG WORKER_CONNECTIONS="1000"
 
 # set environment variables
 ENV SECRET_KEY=$SECRET_KEY
@@ -37,6 +45,8 @@ ENV DB_PASS=$DB_PASS
 ENV DB_URI=$DB_URI
 ENV CA_HOSTNAME=$CA_HOSTNAME
 ENV UPLOADS_DIR=$UPLOADS_DIR
+ENV WORKERS=$WORKERS
+ENV WORKER_CONNECTIONS=$WORKER_CONNECTIONS
 
 # install python
 RUN apt-get update && apt-get install --no-install-recommends -y python3.9 python3-venv && \
@@ -65,6 +75,12 @@ ENV PYTHONUNBUFFERED=1
 ENV VIRTUAL_ENV=/home/myuser/venv
 ENV PATH="/home/myuser/venv/bin:$PATH"
 
-# /dev/shm is mapped to shared memory and should be used for gunicorn heartbeat
-# this will improve performance and avoid random freezes
-CMD ["gunicorn","-b","0.0.0.0:5000","-w","4","-k","gevent","--worker-tmp-dir","/dev/shm","server:app"]
+# /dev/shm is mapped to shared memory and is used to improve gunicorn heartbeat performance
+# each active agent counts as 1 constant event due to web sockets staying connected
+CMD ["gunicorn","-b","0.0.0.0:5000", \
+	 			"--workers","${WORKERS}", \
+				"--worker_connections","${WORKER_CONNECTIONS}", \
+				"--worker_class","gevent", \
+				"--worker-tmp-dir","/dev/shm", \
+				"--preload", \
+				"server:app"]
