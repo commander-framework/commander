@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 import bcrypt
 from datetime import datetime, timedelta
 from flask import request, send_from_directory
@@ -7,7 +6,7 @@ from .models import Agent, Job, Library, RegistrationKey, Session, User
 from mongoengine import DoesNotExist
 from os import path, remove
 import requests
-from server import app, sock
+from server import app, sock, jobsCache
 import shutil
 from time import sleep
 from types import SimpleNamespace
@@ -128,27 +127,21 @@ def agentCheckin(sock):
     # monitor for jobs to send to the agent
     agent = agentQuery[0]
     while True:
-        # TODO: do I have to check if the socket is closed by the agent each time?
+        # TODO: check if the socket is closed by the agent and edit the agent's lastOnline and active fields
         # check db for jobs
-        # TODO: implement JobBoard concurrent cache to reduce DB lookups
-        agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
-        jobsQueue = sorted(agent["jobsQueue"], key = lambda i: i["timeCreated"])
-        if not jobsQueue:
+        job = jobsCache.agentCheckin(agent["agentID"], "foo_group")  # TODO: implement agent groups
+        if not job:
             sleep(1)
             continue
         # send most recent job to agent
-        sock.send(json.dumps({"job": jobsQueue[0].to_json()}))
+        sock.send(json.dumps({"job": job.to_json()}))
         # wait for acknowledgement from agent before marking job as running
         ack = sock.receive()
         if ack != "ack":
             continue
-        # move job to running queue
-        job = jobsQueue.pop(0)
-        job["timeDispatched"] = utcNowTimestamp()
-        agent["jobsRunning"].append(job)
-        agent["lastCheckin"] = utcNowTimestamp()
-        agent.save()
-        # stop checking for jobs if we are testing this function
+        # mark job as received by the agent
+        jobsCache.markSent(agent["agentID"])
+        # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
         try:
             return sock.isMockServer
         except AttributeError:
@@ -163,9 +156,7 @@ def assignJob():
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         return {"error": "invalid auth token or token expired"}, 401
-    # add job to agent's queue in db
-    filename = request.json["filename"]
-    argv = request.json["argv"]   # TODO: error handling (should be list of strings)
+    # get job document from the db
     library = Library.objects().first()
     if not library:
         return {"error": "there are no jobs in the library yet"}, 400
@@ -173,16 +164,15 @@ def assignJob():
     if not jobsQuery:
         return {"error": "the library contains no executable with the given filename"}, 400
     job = jobsQuery[0]
-    # TODO: search by agent id if available, otherwise hostname
-    hostsQuery = Agent.objects(agentID__exact=request.json["agentID"])
-    if not hostsQuery:
-        return {"error": "no hosts found matching the agentID in the request"}, 400
-    agent = hostsQuery[0]
+    argv = request.json["argv"]   # TODO: error handling (should be list of strings)
     job["user"] = request.headers["Username"]
     job["argv"] = argv
     job["timeCreated"] = utcNowTimestamp()
-    agent["jobsQueue"].append(job)
-    agent.save()
+    # add job to the agent's queue
+    try:
+        jobsCache.assignJob(job, agentID=request.json["agentID"])
+    except ValueError as e:
+        return {"error": str(e)}, 400
     return {"success": "job successfully submitted -- waiting for agent to check in"}, 200
 
 

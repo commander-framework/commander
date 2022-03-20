@@ -1,4 +1,5 @@
 import json
+from server import jobsCache
 from server.routes import agentCheckin
 from utils import timestampToDatetime
 
@@ -32,6 +33,7 @@ def testAvailableJobCheckin(sample_Agent, sample_Job):
     agent = sample_Agent
     agent["jobsQueue"].append(sample_Job)
     agent.save()
+    jobsCache.refresh()  # because we added the job to the DB manually
     # check in with api server
     agentCheckin.__wrapped__(MockServer(agent["agentID"]))
     # make sure all job fields were included from the sample job
