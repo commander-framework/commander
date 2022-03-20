@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import bcrypt
 from datetime import datetime, timedelta
 from flask import request, send_from_directory
@@ -6,8 +7,10 @@ from .models import Agent, Job, Library, RegistrationKey, Session, User
 from mongoengine import DoesNotExist
 from os import path, remove
 import requests
-from server import app
+from server import app, sock
 import shutil
+from time import sleep
+from types import SimpleNamespace
 from utils import timestampToDatetime, utcNowTimestamp, convertDocsToJson
 from uuid import uuid4
 import zipfile
@@ -98,28 +101,54 @@ def registerNewAgent():
     return {"agentID": newAgent["agentID"]}
 
 
-@app.get("/agent/jobs")
-def agentCheckin():
+@sock.route("/agent/checkin")
+def agentCheckin(sock):
     """ Agent checking in -- send file to be executed if a job is waiting """
-    if missingParams := missing(request, headers=["Agent-ID"]):
-        return {"error": missingParams}, 400
-    # check db for jobs
-    agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
-    if not agentQuery:
-        return {"error": "agent ID not found"}, 400
+    # get agent ID from socket
+    while True:
+        data = sock.receive()
+        # validate that json data was sent
+        try:
+            jsonData = json.loads(data)
+        except Exception as e:
+            sock.close(400, json.dumps({"error": "message was not a valid json object"}))
+            return {"error": "message was not a valid json object"}
+        # convert data to request-like object for missing()
+        request = SimpleNamespace(**{"headers": jsonData})
+        # check if the Agent ID was provided in the json data
+        if missingParams := missing(request, headers=["Agent-ID"]):
+            sock.close(400, json.dumps({"error": missingParams}))
+            return {"error": missingParams}
+        # make sure Agent ID exists in the DB
+        agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
+        if not agentQuery:
+            sock.close(400, json.dumps({"error": "agent ID not found, please check ID or register"}))
+            return {"error": "agent ID not found, please check ID or register"}
+        break
+    # monitor for jobs to send to the agent
     agent = agentQuery[0]
-    jobsQueue = sorted(agent["jobsQueue"], key = lambda i: i["timeCreated"])
-    if not jobsQueue:
-        return "", 204
-    # get ready to send available job
-    job = jobsQueue.pop(0)
-    # move job to running queue
-    job["timeDispatched"] = utcNowTimestamp()
-    agent["jobsRunning"].append(job)
-    agent["lastCheckin"] = utcNowTimestamp()
-    agent.save()
-    # send most recent job to agent
-    return {"job": job.to_json()}, 200
+    while True:
+        # TODO: do I have to check if the socket it closed each time?
+        # check db for jobs
+        # TODO: implement JobBoard concurrent cache to reduce DB lookups
+        agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
+        jobsQueue = sorted(agent["jobsQueue"], key = lambda i: i["timeCreated"])
+        if not jobsQueue:
+            sleep(1)
+            continue
+        # send most recent job to agent
+        sock.send(json.dumps({"job": jobsQueue[0].to_json()}))
+        # wait for acknowledgement from agent before marking job as running
+        ack = sock.receive()
+        if ack != "ack":
+            continue
+        # move job to running queue
+        job = jobsQueue.pop(0)
+        job["timeDispatched"] = utcNowTimestamp()
+        agent["jobsRunning"].append(job)
+        agent["lastCheckin"] = utcNowTimestamp()
+        agent.save()
+        return  # TODO: remove this but fix the infinite loop for tests
 
 
 @app.post("/agent/jobs")
