@@ -1,4 +1,5 @@
 import json
+from server.models import Agent
 
 
 def testRegisterAgent(client, sample_RegistrationKey, sample_Agent):
@@ -13,12 +14,9 @@ def testRegisterAgent(client, sample_RegistrationKey, sample_Agent):
                                             "os": sample_Agent["os"]}))
     assert response.status_code == 200
     assert "agentID" in response.json
-    # check in with new agent to make sure it was saved to the db
-    agentID = response.json["agentID"]
-    response = client.get("/agent/jobs",
-                          headers={"Content-Type": "application/json",
-                                   "Agent-ID": agentID})
-    assert response.status_code == 204
+    # make sure agent was saved to the db
+    agentQuery = Agent.objects().get()
+    assert agentQuery
 
 
 def testNoRegKeyRegisterAgent(client, sample_RegistrationKey, sample_Agent):

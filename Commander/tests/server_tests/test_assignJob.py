@@ -1,5 +1,23 @@
 import json
+from server.routes import agentCheckin
 from utils import timestampToDatetime
+
+
+class MockServer:
+    def __init__(self, agentID):
+        self.lastMessage = None
+        self.agentID = agentID
+    def send(self, msg):
+        self.lastMessage = msg
+    def receive(self):
+        if not self.lastMessage:
+            # send given Agent ID in valid json format
+            return json.dumps({"Agent-ID": self.agentID})
+        else:
+            # response to a job being assigned to the endpoint
+            return "ack"
+    def close(self, *args, **kwargs):
+        return
 
 
 def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
@@ -23,23 +41,19 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
     assert response.status_code == 200
     assert response.json["success"] == "job successfully submitted -- waiting for agent to check in"
     # check in and make sure job is in agent's queue now
-    response = client.get("/agent/jobs",
-                          headers={"Content-Type": "application/json",
-                                   "Agent-ID": sample_Agent["agentID"]})
-    assert response.status_code == 200
+    agentCheckin.__wrapped__(MockServer(agent["agentID"]))
     # make sure all job fields were included from the sample job
-    assert json.loads(response.json["job"])["executor"] == sample_Job["executor"]
-    assert json.loads(response.json["job"])["filename"] == sample_Job["filename"]
-    assert json.loads(response.json["job"])["description"] == sample_Job["description"]
-    assert json.loads(response.json["job"])["os"] == sample_Job["os"]
-    assert json.loads(response.json["job"])["user"] == sample_Job["user"]
-    assert json.loads(response.json["job"])["argv"] == []
-    # make sure timeCreated was updated when the job was assigned
-    createdTimestamp = json.loads(response.json["job"])["timeCreated"]
-    createdTime = timestampToDatetime(createdTimestamp)
-    assert createdTime >= timestampToDatetime(sample_Job["timeCreated"])
+    agent.reload()
+    job = agent.jobsRunning[0]
+    assert job["executor"] == sample_Job["executor"]
+    assert job["filename"] == sample_Job["filename"]
+    assert job["description"] == sample_Job["description"]
+    assert job["os"] == sample_Job["os"]
+    assert job["user"] == sample_Job["user"]
     # make sure timeDispatched was created
-    dispatchTimestamp = json.loads(response.json["job"])["timeDispatched"]
+    createdTimestamp = job["timeCreated"]
+    createdTime = timestampToDatetime(createdTimestamp)
+    dispatchTimestamp = job["timeDispatched"]
     dispatchTime = timestampToDatetime(dispatchTimestamp)
     assert dispatchTime >= createdTime
 
