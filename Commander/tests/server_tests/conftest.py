@@ -33,7 +33,6 @@ def sample_JobFile():
         os.remove(tempdir + "testfile")
 
 
-
 @pytest.fixture
 def sample_Job():
     job = Job(executor="psh",
