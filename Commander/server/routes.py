@@ -128,7 +128,7 @@ def agentCheckin(sock):
     # monitor for jobs to send to the agent
     agent = agentQuery[0]
     while True:
-        # TODO: do I have to check if the socket it closed each time?
+        # TODO: do I have to check if the socket is closed by the agent each time?
         # check db for jobs
         # TODO: implement JobBoard concurrent cache to reduce DB lookups
         agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
@@ -148,7 +148,11 @@ def agentCheckin(sock):
         agent["jobsRunning"].append(job)
         agent["lastCheckin"] = utcNowTimestamp()
         agent.save()
-        return  # TODO: remove this but fix the infinite loop for tests
+        # stop checking for jobs if we are testing this function
+        try:
+            return sock.isMockServer
+        except AttributeError:
+            pass
 
 
 @app.post("/agent/jobs")

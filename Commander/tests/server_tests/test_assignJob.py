@@ -7,6 +7,7 @@ class MockServer:
     def __init__(self, agentID):
         self.lastMessage = None
         self.agentID = agentID
+        self.isMockServer = True
     def send(self, msg):
         self.lastMessage = msg
     def receive(self):
