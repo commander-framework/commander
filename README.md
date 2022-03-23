@@ -55,6 +55,6 @@ Right now I'm working on designing and implementing the last part of the API ser
 
 ✔️**CAPy**: The required functionality from CAPy is fully implemented and tested.
 
-✔️**Nginx**: Nginx configuration is 100% implemented and tested.
+🚧**Nginx**: Nginx configuration ~~is 100% implemented and tested~~ needs to be updated after the addition of WebSockets to the server.
 
 ✔️**Docker**: Docker build and compose files are 100% implemented and tested.
