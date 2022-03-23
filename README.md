@@ -25,9 +25,13 @@ The server maintains a library of jobs, tasks, and services that can be assigned
 
 By default, agents are programmed to do nothing but check in for new jobs, tasks, and services. This keeps the CPU and memory footprint low. When a job is sent to an agent, the agent will download what it needs, execute it, and delete it afterwards. Scheduled tasks and services will require agents to store files locally, and services will increase base resource utilization.
 
+### 🔄 Self-Updating
+
+Groups of agents can be assigned a version number that is changable by an admin. Agent version changes are detected automatically and kick off updates or roll-backs to get the agents on the specified version. Under the hood, an agent version change is just a built-in job.
+
 ### 🔒 TLS encryption
 
-All communication between the server and the agents is done via HTTPS and is encrypted, but there is no need to mess with certificates yourself. Server certificate generation and deployment is automatically handled by [CAPy](https://github.com/doctormay6/CAPy), and root CA trust is automatically set up on the agents when they are deployed.
+All communication between the server and the agents is done via HTTPS and WSS, but there is no need to mess with certificates yourself. Server certificate generation and deployment is automatically handled by [CAPy](https://github.com/doctormay6/CAPy), and root CA trust is automatically set up on the agents when they are deployed.
 
 ### 📑 Certificate authentication (bidirectional)
 
