@@ -27,23 +27,27 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 FROM ubuntu:20.04 AS runner-image
 
 # DEFAULT ARGS that can be changed
-ARG SECRET_KEY="super-secret-default-key"
+ARG APP_NAME="Commander"
+ARG CA_HOSTNAME="CAPy.local"
+ARG DB_URI="mongomock://localhost/"
 ARG DB_USER=""
 ARG DB_PASS=""
-ARG DB_URI="mongomock://localhost/"
-ARG CA_HOSTNAME="CAPy.local"
-ARG UPLOADS_DIR="/opt/commander/library/"
+ARG LOG_LEVEL="4"
+ARG SECRET_KEY="super-secret-default-key"
+ARG UPLOADS_DIR="/opt/${APP_NAME}/library/"
 # specify WORKERS to match the number of CPU cores allocated to your container
-ARG WORKERS="4"
+ARG WORKERS="2"
 # specify WORKER_CONNECTIONS to the number determined by (client_count/workers)*2
 ARG WORKER_CONNECTIONS="1000"
 
 # set environment variables
-ENV SECRET_KEY=$SECRET_KEY
+ENV APP_NAME=$APP_NAME
+ENV CA_HOSTNAME=$CA_HOSTNAME
+ENV DB_URI=$DB_URI
 ENV DB_USER=$DB_USER
 ENV DB_PASS=$DB_PASS
-ENV DB_URI=$DB_URI
-ENV CA_HOSTNAME=$CA_HOSTNAME
+ENV LOG_LEVEL=$LOG_LEVEL
+ENV SECRET_KEY=$SECRET_KEY
 ENV UPLOADS_DIR=$UPLOADS_DIR
 ENV WORKERS=$WORKERS
 ENV WORKER_CONNECTIONS=$WORKER_CONNECTIONS

@@ -32,12 +32,16 @@ services:
       context: ./Commander
       target: runner-image
       args:
-        SECRET_KEY: ${SECRET_KEY}
+        APP_NAME: ${APP_NAME}
+        CA_HOSTNAME: "capy"
+        DB_URI: mongodb://mongo
         DB_USER: ${DB_USER}
         DB_PASS: ${DB_PASS}
-        DB_URI: mongodb://mongo
-        CA_HOSTNAME: "capy"
+        LOG_LEVEL: ${LOG_LEVEL}
+        SECRET_KEY: ${SECRET_KEY}
         UPLOADS_DIR: "/opt/commander/library/"
+        WORKERS: ${WORKERS}
+        WORKER_CONNECTIONS: ${WORKER_CONNECTIONS}
     depends_on:
       - mongo
       - capy
