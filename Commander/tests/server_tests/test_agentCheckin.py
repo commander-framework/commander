@@ -8,6 +8,7 @@ class MockServer:
     def __init__(self, agentID):
         self.lastMessage = None
         self.agentID = agentID
+        self.sock = self
         self.isMockServer = True
     def send(self, msg):
         self.lastMessage = msg
@@ -26,6 +27,8 @@ class MockServer:
             return "ack"
     def close(self, *args, **kwargs):
         return
+    def getpeername(self):
+        return "mock-server"
 
 
 def testAvailableJobCheckin(sample_Agent, sample_Job):

@@ -1,3 +1,6 @@
+from multiprocessing import ProcessError
+from xml.dom import ValidationErr
+from xmlrpc.client import ResponseError
 import bcrypt
 from datetime import datetime, timedelta
 from flask import request, send_from_directory
@@ -6,7 +9,7 @@ from .models import Agent, Job, Library, RegistrationKey, Session, User
 from mongoengine import DoesNotExist
 from os import path, remove
 import requests
-from server import app, sock, jobsCache
+from server import app, jobsCache, log, sock
 import shutil
 from time import sleep
 from types import SimpleNamespace
@@ -19,6 +22,7 @@ import zipfile
 def sendAgentInstaller():
     """ Fetch or generate an agent installer for the given operating system """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["os"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -38,6 +42,7 @@ def sendAgentInstaller():
         try:
             getLatestAgentInstallers(version)
         except Exception as e:
+            log.error(e)
             return {"error": str(e)}, 500
     return send_from_directory(f"agent/installers/{version}/{filename}", filename=filename), 200
 
@@ -50,7 +55,7 @@ def getLatestAgentInstallers(version):
                                 headers={"Content-Type": "application/json"},
                                 data={"hostname": "agent"})
         if response.status_code != 200:
-            raise Exception("failed to get agent cert from CAPy")
+            raise ResponseError("failed to get agent cert from CAPy")
         with open("agent/certs/client.crt", "w") as f:
             f.write(response.json["cert"])
         with open("agent/certs/client.key", "w") as f:
@@ -60,12 +65,12 @@ def getLatestAgentInstallers(version):
     # get installers from GitHub
     with requests.get(f"https://github.com/lawndoc/commander/releases/download/{version}/windowsInstaller.zip") as response:
         if response.status_code != 200:
-            raise Exception("failed to get windows installer from GitHub")
+            raise ResponseError("failed to get windows installer from GitHub")
         with open(f"agent/installers/{version}/windowsInstaller.zip", 'wb') as f:
             shutil.copyfileobj(response.raw, f)
     with requests.get(f"https://github.com/lawndoc/commander/releases/download/{version}/linuxInstaller.zip") as response:
         if response.status_code != 200:
-            raise Exception("failed to get linux installer from GitHub")
+            raise ResponseError("failed to get linux installer from GitHub")
         with open(f"agent/installers/{version}/linuxInstaller.zip", 'wb') as f:
             shutil.copyfileobj(response.raw, f)
     # add certs to installer zips
@@ -83,6 +88,7 @@ def getLatestAgentInstallers(version):
 def registerNewAgent():
     """ Register a new agent with the commander server """
     if missingParams := missing(request, data=["registrationKey", "hostname", "os"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check registration key
     regKey = RegistrationKey.objects().first()
@@ -101,27 +107,29 @@ def registerNewAgent():
 
 
 @sock.route("/agent/checkin")
-def agentCheckin(sock):
+def agentCheckin(ws):
     """ Agent checking in -- send file to be executed if a job is waiting """
     # get agent ID from socket
     while True:
-        data = sock.receive()
+        data = ws.receive()
         # validate that json data was sent
         try:
             jsonData = json.loads(data)
         except Exception as e:
-            sock.close(400, json.dumps({"error": "message was not a valid json object"}))
+            ws.close(400, json.dumps({"error": "message was not a valid json object"}))
             return {"error": "message was not a valid json object"}
         # convert data to request-like object for missing()
-        request = SimpleNamespace(**{"headers": jsonData})
+        request = SimpleNamespace(**{"headers": jsonData,
+                                     "remote_addr": ws.sock.getpeername()[0]})
         # check if the Agent ID was provided in the json data
         if missingParams := missing(request, headers=["Agent-ID"]):
-            sock.close(400, json.dumps({"error": missingParams}))
+            log.warning(f"[{request.remote_addr}] {missingParams}")
+            ws.close(400, json.dumps({"error": missingParams}))
             return {"error": missingParams}
         # make sure Agent ID exists in the DB
         agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
         if not agentQuery:
-            sock.close(400, json.dumps({"error": "agent ID not found, please check ID or register"}))
+            ws.close(400, json.dumps({"error": "agent ID not found, please check ID or register"}))
             return {"error": "agent ID not found, please check ID or register"}
         break
     # monitor for jobs to send to the agent
@@ -134,16 +142,16 @@ def agentCheckin(sock):
             sleep(1)
             continue
         # send most recent job to agent
-        sock.send(json.dumps({"job": job.to_json()}))
+        ws.send(json.dumps({"job": job.to_json()}))
         # wait for acknowledgement from agent before marking job as running
-        ack = sock.receive()
+        ack = ws.receive()
         if ack != "ack":
             continue
         # mark job as received by the agent
         jobsCache.markSent(agent["agentID"])
         # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
         try:
-            return sock.isMockServer
+            return ws.isMockServer
         except AttributeError:
             pass
 
@@ -152,6 +160,7 @@ def agentCheckin(sock):
 def assignJob():
     """ Admin submitting a job -- add job to the specified agent's queue """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID", "filename", "argv"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -180,6 +189,7 @@ def assignJob():
 def sendExecutable():
     """ Send executable or script to the agent for execution """
     if missingParams := missing(request, headers=["Agent-ID"], data=["filename"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check db for matching job
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
@@ -201,6 +211,7 @@ def sendExecutable():
 def getJobResults():
     """ Get all jobs that have executed in the last 7 days, or optionally specify a different amount of time """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -225,6 +236,7 @@ def getJobResults():
 def postJobResults():
     """ Job has been executed -- save output and return code """
     if missingParams := missing(request, headers=["Agent-ID"], data=["job"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check db for matching job
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
@@ -246,6 +258,7 @@ def postJobResults():
 def getJobLibrary():
     """ Return simplified library overview in json format """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -261,6 +274,7 @@ def getJobLibrary():
 def addNewJob():
     """ Add a new executable to the Commander library """
     if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["job", "file"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -296,6 +310,7 @@ def addNewJob():
 def updateJob():
     """ Update the file or description of an existing entry in the commander library """
     if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["filename"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -328,6 +343,7 @@ def updateJob():
 def deleteJob():
     """ Delete an entry and its corresponding file from the commander library """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -355,6 +371,7 @@ def deleteJob():
 def login():
     """ Authenticate an admin and return a new session token if successful """
     if missingParams := missing(request, data=["username", "password"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
@@ -382,6 +399,7 @@ def login():
 def updateCredentials():
     """ Authenticate an admin and update that admin's credentials """
     if missingParams := missing(request, data=["username", "password", "newPassword"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
@@ -404,6 +422,7 @@ def updateCredentials():
 def newAdmin():
     """ Create a new admin account using valid session """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["username", "password", "name"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -426,6 +445,7 @@ def newAdmin():
 def testAuthentication():
     """ Authenticate using session token to test and see if it is still valid """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -437,6 +457,7 @@ def testAuthentication():
 def getRegistrationKey():
     """ Get or generate the registration key that agents need to register with commander """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
@@ -457,6 +478,7 @@ def getRegistrationKey():
 def updateRegistrationKey():
     """ Generate and return a new registration key that agents need to register with commander """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
+        log.warning(f"[{request.remote_addr}] {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
