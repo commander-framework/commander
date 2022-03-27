@@ -24,7 +24,7 @@ def sendAgentInstaller():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure OS is valid
     targetOS = request.json["os"]
@@ -164,7 +164,7 @@ def assignJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # get job document from the db
     library = Library.objects().first()
@@ -216,7 +216,7 @@ def getJobResults():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # check db for matching agent
     agentQuery = Agent.objects(agentID__exact=request.json["agentID"])
@@ -264,7 +264,7 @@ def getJobLibrary():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     try:
         library = Library.objects().get()
@@ -281,7 +281,7 @@ def addNewJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # generate library entry document
     if "file" not in request.files:
@@ -318,7 +318,7 @@ def updateJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure library exists
     library = Library.objects().first()
@@ -352,7 +352,7 @@ def deleteJob():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure job exists
     library = Library.objects().first()
@@ -432,7 +432,7 @@ def newAdmin():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure username doesn't already exist
     adminQuery = User.objects(username__exact=request.json["username"])
@@ -456,7 +456,7 @@ def testAuthentication():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     return {"success": "authentication token is valid"}, 200
 
@@ -469,7 +469,7 @@ def getRegistrationKey():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # return current key if one exists
     regKeyQuery = RegistrationKey.objects()
@@ -491,7 +491,7 @@ def updateRegistrationKey():
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.warning(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure a current key exists
     regKeyQuery = RegistrationKey.objects()
