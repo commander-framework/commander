@@ -526,6 +526,7 @@ def getRegistrationKey():
     regKey = RegistrationKey(regKey=newKey)
     regKey.save()
     # return new key
+    log.info(f"[{request.remote_addr}] successfully generated a new registration key")
     return {"registration-key": newKey}
 
 
@@ -550,6 +551,7 @@ def updateRegistrationKey():
     regKey["regKey"] = newKey
     regKey.save()
     # return new key
+    log.info(f"[{request.remote_addr}] successfully regenerated the registration key")
     return {"registration-key": newKey}
 
 
