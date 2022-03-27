@@ -20,11 +20,11 @@ import zipfile
 def sendAgentInstaller():
     """ Fetch or generate an agent installer for the given operating system """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["os"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure OS is valid
     targetOS = request.json["os"]
@@ -44,7 +44,7 @@ def sendAgentInstaller():
         except CommanderError as e:
             log.error(e)
             return {"error": str(e)}, 500
-    log.info(f"[{request.remote_addr}] sending agent installer for {targetOS}")
+    log.info(f"<{request.remote_addr}> sending agent installer for {targetOS}")
     return send_from_directory(f"agent/installers/{version}/{filename}", filename=filename), 200
 
 
@@ -90,7 +90,7 @@ def getLatestAgentInstallers(version):
 def registerNewAgent():
     """ Register a new agent with the commander server """
     if missingParams := missing(request, data=["registrationKey", "hostname", "os"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check registration key
     regKey = RegistrationKey.objects().first()
@@ -98,7 +98,7 @@ def registerNewAgent():
         log.error("no agent registration key found")
         return {"error": "no registration key has been generated yet"}, 500
     if regKey["regKey"] != request.json["registrationKey"]:
-        log.warning(f"[{request.remote_addr}] invalid registration key")
+        log.warning(f"<{request.remote_addr}> invalid registration key")
         return {"error": "invalild registration key"}, 401
     # TODO: make sure OS is valid
     # create agent doc and add it to the db
@@ -108,7 +108,7 @@ def registerNewAgent():
                      lastCheckin=utcNowTimestamp())
     newAgent.save()
     # return agent ID
-    log.info(f"[{request.remote_addr}] registered new agent {newAgent['agentID']}")
+    log.info(f"<{request.remote_addr}> registered new agent {newAgent['agentID']}")
     return {"agentID": newAgent["agentID"]}
 
 
@@ -130,13 +130,13 @@ def agentCheckin(ws):
                                      "remote_addr": ws.sock.getpeername()[0]})
         # check if the Agent ID was provided in the json data
         if missingParams := missing(request, headers=["Agent-ID"]):
-            log.warning(f"[{request.remote_addr}] {missingParams}")
+            log.warning(f"<{request.remote_addr}> {missingParams}")
             ws.close(400, json.dumps({"error": missingParams}))
             return {"error": missingParams}
         # make sure Agent ID exists in the DB
         agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
         if not agentQuery:
-            log.warning(f"[{request.remote_addr}] agentID not found in database")
+            log.warning(f"<{request.remote_addr}> agentID not found in database")
             ws.close(400, json.dumps({"error": "agent ID not found, please check ID or register"}))
             return {"error": "agent ID not found, please check ID or register"}
         break
@@ -150,14 +150,14 @@ def agentCheckin(ws):
             sleep(1)
             continue
         # send most recent job to agent
-        log.info(f"[{request.remote_addr}] sending job '{job['filename']}' to agent")
+        log.info(f"<{request.remote_addr}> sending job '{job['filename']}' to agent")
         ws.send(json.dumps({"job": job.to_json()}))
         # wait for acknowledgement from agent before marking job as running
         ack = ws.receive()
         if ack != "ack":
             continue
         # mark job as received by the agent
-        log.info(f"[{request.remote_addr}] marking job '{job['filename']}' as received by agent")
+        log.info(f"<{request.remote_addr}> marking job '{job['filename']}' as received by agent")
         jobsCache.markSent(agent["agentID"])
         # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
         try:
@@ -170,20 +170,20 @@ def agentCheckin(ws):
 def assignJob():
     """ Admin submitting a job -- add job to the specified agent's queue """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID", "filename", "argv"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # get job document from the db
     library = Library.objects().first()
     if not library:
-        log.warning(f"[{request.remote_addr}] failed to assign a job because the library is empty")
+        log.warning(f"<{request.remote_addr}> failed to assign a job because the library is empty")
         return {"error": "there are no jobs in the library yet"}, 400
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
     if not jobsQuery:
-        log.warning(f"[{request.remote_addr}] failed to assign a job because it was not found in the library")
+        log.warning(f"<{request.remote_addr}> failed to assign a job because it was not found in the library")
         return {"error": "the library contains no executable with the given filename"}, 400
     job = jobsQuery[0]
     argv = request.json["argv"]   # TODO: error handling (should be list of strings)
@@ -196,7 +196,7 @@ def assignJob():
     except ValueError as e:
         log.warning(f"failed to assign job to agent: {e}")
         return {"error": str(e)}, 400
-    log.info(f"[{request.remote_addr}] assigned job '{job['filename']}' to agent {request.json['agentID']}")
+    log.info(f"<{request.remote_addr}> assigned job '{job['filename']}' to agent {request.json['agentID']}")
     return {"success": "job successfully submitted -- waiting for agent to check in"}, 200
 
 
@@ -204,24 +204,24 @@ def assignJob():
 def sendExecutable():
     """ Send executable or script to the agent for execution """
     if missingParams := missing(request, headers=["Agent-ID"], data=["filename"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check db for matching job
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
-        log.warning(f"[{request.remote_addr}] agentID not found in database")
+        log.warning(f"<{request.remote_addr}> agentID not found in database")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsRunning"]))
     if not jobsQuery:
-        log.warning(f"[{request.remote_addr}] agent does not have a job with the given filename")
+        log.warning(f"<{request.remote_addr}> agent does not have a job with the given filename")
         return {"error": "no matching job available for download"}, 400
     # make sure file exists
     if not path.exists(app.config["UPLOADS_DIR"] + path.sep + jobsQuery[0]["filename"]):
-        log.error(f"[{request.remote_addr}] file '{jobsQuery[0]['filename']}' does not exist")
+        log.error(f"<{request.remote_addr}> file '{jobsQuery[0]['filename']}' does not exist")
         return {"error": "job file missing -- please contact an administrator"}, 500
     # matching job found -- send executable to the agent
-    log.info(f"[{request.remote_addr}] sending file '{jobsQuery[0]['filename']}' to agent")
+    log.info(f"<{request.remote_addr}> sending file '{jobsQuery[0]['filename']}' to agent")
     return send_from_directory(directory=app.config["UPLOADS_DIR"],
                                path=jobsQuery[0]["filename"])
 
@@ -230,16 +230,16 @@ def sendExecutable():
 def getJobResults():
     """ Get all jobs that have executed in the last 7 days, or optionally specify a different amount of time """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # check db for matching agent
     agentQuery = Agent.objects(agentID__exact=request.json["agentID"])
     if not agentQuery:
-        log.warning(f"[{request.remote_addr}] agentID not found in database")
+        log.warning(f"<{request.remote_addr}> agentID not found in database")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     # get all jobs that have executed in the last 7 days (or specified time)
@@ -250,7 +250,7 @@ def getJobResults():
     jobHistoryQuery = list(filter(lambda job: timestampToDatetime(job["timeEnded"]) > datetime.utcnow() - timedelta(days=daysAgo), agent["jobsHistory"]))
     # convert to json
     jobHistory = convertDocsToJson(jobHistoryQuery)
-    log.info(f"[{request.remote_addr}] returning {len(jobHistory)} jobs from agent {request.json['agentID']}'s history")
+    log.info(f"<{request.remote_addr}> returning {len(jobHistory)} jobs from agent {request.json['agentID']}'s history")
     return {"jobs": jobHistory}, 200
 
 
@@ -258,24 +258,24 @@ def getJobResults():
 def postJobResults():
     """ Job has been executed -- save output and return code """
     if missingParams := missing(request, headers=["Agent-ID"], data=["job"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check db for matching job
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
-        log.warning(f"[{request.remote_addr}] agentID not found in database")
+        log.warning(f"<{request.remote_addr}> agentID not found in database")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     finishedJob = json.loads(request.json["job"])
     jobRunningQuery = list(filter(lambda job: job["filename"] == finishedJob["filename"], agent["jobsRunning"]))
     if not jobRunningQuery:
-        log.warning(f"[{request.remote_addr}] agent does not have a running job with the given filename")
+        log.warning(f"<{request.remote_addr}> agent does not have a running job with the given filename")
         return {"error": "no matching jobs were supposed to be running"}, 400
     agent.update(pull__jobsRunning=jobRunningQuery[0])
     completedJob = Job(**finishedJob)
     agent.jobsHistory.append(completedJob)
     agent.save()
-    log.info(f"[{request.remote_addr}] agent {request.headers['Agent-ID']} has finished job '{finishedJob['filename']}'")
+    log.info(f"<{request.remote_addr}> agent {request.headers['Agent-ID']} has finished job '{finishedJob['filename']}'")
     return {"success": "successfully saved job response"}, 200
 
 
@@ -283,18 +283,18 @@ def postJobResults():
 def getJobLibrary():
     """ Return simplified library overview in json format """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     try:
         library = Library.objects().get()
     except DoesNotExist:
-        log.info(f"[{request.remote_addr}] returning empty library")
+        log.info(f"<{request.remote_addr}> returning empty library")
         return "", 204
-    log.info(f"[{request.remote_addr}] returning library overview")
+    log.info(f"<{request.remote_addr}> returning library overview")
     return {"library": library.to_json()}, 200
 
 
@@ -302,40 +302,40 @@ def getJobLibrary():
 def addNewJob():
     """ Add a new executable to the Commander library """
     if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["job", "file"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # generate library entry document
     if "file" not in request.files:
-        log.warning(f"[{request.remote_addr}] no file uploaded with new job")
+        log.warning(f"<{request.remote_addr}> no file uploaded with new job")
         return {"error": "file not uploaded with request"}, 400
     newJob = json.loads(request.form["job"])
     # make sure job includes all required fields
     if missingFields := missingJobFields(newJob):
-        log.warning(f"[{request.remote_addr}] {missingFields}")
+        log.warning(f"<{request.remote_addr}> {missingFields}")
         return {"error": missingFields}, 400
     libraryEntry = Job(**newJob)
     # create library if it doesn't already exist
     libraryQuery = Library.objects()
     if not libraryQuery:
-        log.info(f"[{request.remote_addr}] library is empty, initializing libary")
+        log.info(f"<{request.remote_addr}> library is empty, initializing libary")
         library = Library(jobs=[])
     else:
         library = libraryQuery[0]
     # check if filename already exists in the library
     jobsQuery = list(filter(lambda job: job["filename"] == libraryEntry["filename"], library["jobs"]))
     if jobsQuery:
-        log.warning(f"[{request.remote_addr}] filename already exists in the job library")
+        log.warning(f"<{request.remote_addr}> filename already exists in the job library")
         return {"error": "file name already exists in the library"}, 400
     # save executable file to server and job entry to libary
     uploadedFile = request.files["file"]
     uploadedFile.save(app.config["UPLOADS_DIR"] + libraryEntry["filename"])
     library["jobs"].append(libraryEntry)
     library.save()
-    log.info(f"[{request.remote_addr}] added new job '{libraryEntry['filename']}' to library")
+    log.info(f"<{request.remote_addr}> added new job '{libraryEntry['filename']}' to library")
     return {"success": "successfully added new executable to the commander library"}, 200
 
 
@@ -343,38 +343,38 @@ def addNewJob():
 def updateJob():
     """ Update the file or description of an existing entry in the commander library """
     if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["filename"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure library exists
     library = Library.objects().first()
     if not library:
-        log.warning(f"[{request.remote_addr}] failed to update job because the library is empty")
+        log.warning(f"<{request.remote_addr}> failed to update job because the library is empty")
         return {"error": "there is no job library yet"}, 400
     # make sure job exists
     jobsQuery = list(filter(lambda job: job["filename"] == request.form["filename"], library["jobs"]))
     if not jobsQuery:
-        log.warning(f"[{request.remote_addr}] failed to update job because the job does not exist")
+        log.warning(f"<{request.remote_addr}> failed to update job because the job does not exist")
         return {"error": "no existing job with that file name"}, 400
     # make sure request either updates the file or the description
     if "file" not in request.files and "description" not in request.form:
-        log.warning(f"[{request.remote_addr}] failed to update job because no filename or description was provided")
+        log.warning(f"<{request.remote_addr}> failed to update job because no filename or description was provided")
         return {"error": "niether a new file nor a new description was provided"}, 400
     # save new executable if it was provided
     if "file" in request.files:
         uploadedFile = request.files["file"]
         uploadedFile.save(app.config["UPLOADS_DIR"] + request.form["filename"])
-        log.info(f"[{request.remote_addr}] updated job file for '{request.form['filename']}'")
+        log.info(f"<{request.remote_addr}> updated job file for '{request.form['filename']}'")
     # update library description for file if a new one was provided
     if "description" in request.form:
         job = jobsQuery[0]
         job["description"] = request.form["description"]
         job["timeCreated"] = utcNowTimestamp()
         library.save()
-        log.info(f"[{request.remote_addr}] updated job description for '{request.form['filename']}'")
+        log.info(f"<{request.remote_addr}> updated job description for '{request.form['filename']}'")
     return {"success": "successfully updated the job in the library"}, 200
 
 
@@ -382,20 +382,20 @@ def updateJob():
 def deleteJob():
     """ Delete an entry and its corresponding file from the commander library """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure job exists
     library = Library.objects().first()
     if not library:
-        log.warning(f"[{request.remote_addr}] failed to delete job because the library is empty")
+        log.warning(f"<{request.remote_addr}> failed to delete job because the library is empty")
         return {"error": "there are no jobs in the library yet"}, 400
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
     if not jobsQuery:
-        log.warning(f"[{request.remote_addr}] failed to delete job because the job does not exist")
+        log.warning(f"<{request.remote_addr}> failed to delete job because the job does not exist")
         return {"error": "no existing job with that file name"}, 400
     job = jobsQuery[0]
     # delete executable from file system
@@ -406,7 +406,7 @@ def deleteJob():
     # remove library if empty
     if not Library.objects().first()["jobs"]:
         library.delete()
-    log.info(f"[{request.remote_addr}] deleted job '{request.json['filename']}' from library")
+    log.info(f"<{request.remote_addr}> deleted job '{request.json['filename']}' from library")
     return {"success": "successfully deleted the job from the library"}, 200
 
 
@@ -414,18 +414,18 @@ def deleteJob():
 def login():
     """ Authenticate an admin and return a new session token if successful """
     if missingParams := missing(request, data=["username", "password"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
     if not adminQuery:
-        log.info(f"[{request.remote_addr}] failed to login because the username does not exist")
+        log.info(f"<{request.remote_addr}> failed to login because the username does not exist")
         return {"error": "username not found"}, 401
     adminAccount = adminQuery[0]
     # hash password and check match
     if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["passwordHash"].encode()):
         # TODO: implement brute force protection
-        log.info(f"[{request.remote_addr}] failed to login because the password was incorrect")
+        log.info(f"<{request.remote_addr}> failed to login because the password was incorrect")
         return {"error": "password does not match"}, 401
     # generate session and set expiration
     newToken = str(uuid4())
@@ -437,7 +437,7 @@ def login():
     adminAccount["sessions"].append(session)
     adminAccount.save()
     # return authentication token and expiration date
-    log.info(f"[{request.remote_addr}] successfully logged in and generated a new session token for '{request.json['username']}'")
+    log.info(f"<{request.remote_addr}> successfully logged in and generated a new session token for '{request.json['username']}'")
     return {"token": newToken, "expires": expiration}, 200
 
 
@@ -445,25 +445,25 @@ def login():
 def updateCredentials():
     """ Authenticate an admin and update that admin's credentials """
     if missingParams := missing(request, data=["username", "password", "newPassword"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
     if not adminQuery:
-        log.info(f"[{request.remote_addr}] failed to update credentials because the username does not exist")
+        log.info(f"<{request.remote_addr}> failed to update credentials because the username does not exist")
         return {"error": "username not found"}, 401
     adminAccount = adminQuery[0]
     # hash password and check match
     if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["passwordHash"].encode()):
         # TODO: implement brute force protection
-        log.info(f"[{request.remote_addr}] failed to update credentials because the password was incorrect")
+        log.info(f"<{request.remote_addr}> failed to update credentials because the password was incorrect")
         return {"error": "password does not match"}, 401
     # change password and save to the database
     salt = bcrypt.gensalt()
     hashedPassword = bcrypt.hashpw(request.json["newPassword"].encode(), salt)
     adminAccount["passwordHash"] = hashedPassword.decode()
     adminAccount.save()
-    log.info(f"[{request.remote_addr}] successfully updated credentials for '{request.json['username']}'")
+    log.info(f"<{request.remote_addr}> successfully updated credentials for '{request.json['username']}'")
     return {"success": "successfully changed the password for your account"}, 200
 
 
@@ -471,16 +471,16 @@ def updateCredentials():
 def newAdmin():
     """ Create a new admin account using valid session """
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["username", "password", "name"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure username doesn't already exist
     adminQuery = User.objects(username__exact=request.json["username"])
     if adminQuery:
-        log.warning(f"[{request.remote_addr}] failed to create account because the username already exists")
+        log.warning(f"<{request.remote_addr}> failed to create account because the username already exists")
         return {"error": "username already taken"}, 400
     # hash password and save to the database
     salt = bcrypt.gensalt()
@@ -489,7 +489,7 @@ def newAdmin():
                         username=request.json["username"],
                         passwordHash=hashedPassword.decode())
     adminAccount.save()
-    log.info(f"[{request.remote_addr}] successfully created a new admin account for '{request.json['username']}'")
+    log.info(f"<{request.remote_addr}> successfully created a new admin account for '{request.json['username']}'")
     return {"success": "successfully created new admin account"}, 200
 
 
@@ -497,13 +497,13 @@ def newAdmin():
 def testAuthentication():
     """ Authenticate using session token to test and see if it is still valid """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
-    log.info(f"[{request.remote_addr}] successfully authenticated '{request.headers['Username']}' for testing")
+    log.info(f"<{request.remote_addr}> successfully authenticated '{request.headers['Username']}' for testing")
     return {"success": "authentication token is valid"}, 200
 
 
@@ -511,11 +511,11 @@ def testAuthentication():
 def getRegistrationKey():
     """ Get or generate the registration key that agents need to register with commander """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # return current key if one exists
     regKeyQuery = RegistrationKey.objects()
@@ -526,7 +526,7 @@ def getRegistrationKey():
     regKey = RegistrationKey(regKey=newKey)
     regKey.save()
     # return new key
-    log.info(f"[{request.remote_addr}] successfully generated a new registration key")
+    log.info(f"<{request.remote_addr}> successfully generated a new registration key")
     return {"registration-key": newKey}
 
 
@@ -534,11 +534,11 @@ def getRegistrationKey():
 def updateRegistrationKey():
     """ Generate and return a new registration key that agents need to register with commander """
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"[{request.remote_addr}] {missingParams}")
+        log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
     # check admin authentication token
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"[{request.remote_addr}] invalid or expired auth token")
+        log.info(f"<{request.remote_addr}> invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
     # make sure a current key exists
     regKeyQuery = RegistrationKey.objects()
@@ -551,7 +551,7 @@ def updateRegistrationKey():
     regKey["regKey"] = newKey
     regKey.save()
     # return new key
-    log.info(f"[{request.remote_addr}] successfully regenerated the registration key")
+    log.info(f"<{request.remote_addr}> successfully regenerated the registration key")
     return {"registration-key": newKey}
 
 
