@@ -1,44 +1,51 @@
 import json
 
 
-def testAuth(client, sample_valid_Session, sample_User):
-    # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
-    # make test session validation
+def testValidJWT(client):
+    # test authentication with a valid JWT
     response = client.get("/admin/authenticate",
                           headers={"Content-Type": "application/json",
-                                   "Auth-Token": sample_valid_Session["authToken"],
-                                   "Username": sample_User["username"]},
+                                   # token generated with https://jwt.io/#debugger-io using default secret key
+                                   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.fTNmI6XjfES0SYawD41fUBSzzZheBs7A1ntD6JNuRhI"},
                           data=json.dumps({}))
     assert response.status_code == 200
     assert response.json["success"] == "authentication token is valid"
 
 
-def testExpiredSessionAuth(client, sample_expired_Session, sample_User):
-    # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_expired_Session)
-    user.save()
-    # make test session validation
-    response = client.get("/admin/authenticate",
-                          headers={"Content-Type": "application/json",
-                                   "Auth-Token": sample_expired_Session["authToken"],
-                                   "Username": sample_User["username"]},
-                          data=json.dumps({}))
-    assert response.status_code == 401
-    assert response.json["error"] == "invalid auth token or token expired"
-
-
-def testMissingFieldsAuth(client, sample_valid_Session, sample_User):
-    # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
-    # make test session validation
+def testMissingJWT(client):
+    # test authentication with no JWT
     response = client.get("/admin/authenticate",
                           headers={"Content-Type": "application/json"},
                           data=json.dumps({}))
-    assert response.status_code == 400
-    assert response.json["error"] == "request is missing the following parameters: headers=['Auth-Token', 'Username']"
+    assert response.status_code == 401
+    assert response.json["msg"] == "Missing Authorization Header"
+
+
+def testInvalidJWT(client):
+    # test authentication with an invalid JWT
+    response = client.get("/admin/authenticate",
+                          headers={"Content-Type": "application/json",
+                                   "Authorization": "Bearer " + "non.valid.token"},
+                          data=json.dumps({}))
+    assert response.status_code == 422
+    assert response.json["msg"][:23] == "Invalid header string: "
+
+
+def testBadSignatureJWT(client):
+    # test authentication with a fake JWT in valid format
+    response = client.get("/admin/authenticate",
+                          headers={"Content-Type": "application/json",
+                                   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"},
+                          data=json.dumps({}))
+    assert response.status_code == 422
+    assert response.json["msg"] == "Signature verification failed"
+
+
+def testExpiredJWT(client):
+    # test authentication with an expired JWT
+    response = client.get("/admin/authenticate",
+                          headers={"Content-Type": "application/json",
+                                   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzk5OTB9.qYidunY1JWO58V-LfgT_yWrKgcowodGp_ucFvL4hCOE"},
+                          data=json.dumps({}))
+    assert response.status_code == 401
+    assert response.json["msg"] == "Token has expired"

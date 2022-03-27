@@ -2,7 +2,7 @@ import bcrypt
 from datetime import datetime, timedelta
 from .errors import CommanderError, CAPyError, GitHubError
 from flask import request, send_from_directory
-from flask_jwt_extended import create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 import json
 from .models import Agent, Job, Library, RegistrationKey, Session, User
 from mongoengine import DoesNotExist
@@ -442,17 +442,18 @@ def login():
         log.info(f"<{request.remote_addr}> failed to login because the password was incorrect")
         return {"error": "password does not match"}, 401
     # generate session and set expiration
-    newToken = str(uuid4())
-    expiration = utcNowTimestamp(deltaHours=24)
-    session = Session(username=request.json["username"],
-                      authToken=newToken,
-                      expires=expiration)
-    # add session to admin's session history
-    adminAccount["sessions"].append(session)
-    adminAccount.save()
+    accessToken = create_access_token(identity=request.json["username"])
+    # newToken = str(uuid4())
+    # expiration = utcNowTimestamp(deltaHours=24)
+    # session = Session(username=request.json["username"],
+    #                   authToken=newToken,
+    #                   expires=expiration)
+    # # add session to admin's session history
+    # adminAccount["sessions"].append(session)
+    # adminAccount.save()
     # return authentication token and expiration date
     log.info(f"<{request.remote_addr}> successfully logged in and generated a new session token for '{request.json['username']}'")
-    return {"token": newToken, "expires": expiration}, 200
+    return {"token": accessToken}, 200
 
 
 @app.patch("/admin/login")
@@ -510,17 +511,19 @@ def newAdmin():
 
 
 @app.get("/admin/authenticate")
+@jwt_required()
 def testAuthentication():
     """ Authenticate using session token to test and see if it is still valid """
-    log.debug(f"<{request.remote_addr}> testing authentication token")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"<{request.remote_addr}> {missingParams}")
-        return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
-    log.info(f"<{request.remote_addr}> successfully authenticated '{request.headers['Username']}' for testing")
+    # log.debug(f"<{request.remote_addr}> testing authentication token")
+    # if missingParams := missing(request, headers=["Authorization"]):
+    #     log.warning(f"<{request.remote_addr}> {missingParams}")
+    #     return {"error": missingParams}, 400
+    # # check admin authentication token
+    # if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
+    #     log.info(f"<{request.remote_addr}> invalid or expired auth token")
+    #     return {"error": "invalid auth token or token expired"}, 401
+    currentUser = get_jwt_identity()
+    log.info(f"<{request.remote_addr}> successfully authenticated '{currentUser}' for testing")
     return {"success": "authentication token is valid"}, 200
 
 
