@@ -292,7 +292,9 @@ def getJobLibrary():
     try:
         library = Library.objects().get()
     except DoesNotExist:
+        log.info(f"[{request.remote_addr}] returning empty library")
         return "", 204
+    log.info(f"[{request.remote_addr}] returning library overview")
     return {"library": library.to_json()}, 200
 
 
