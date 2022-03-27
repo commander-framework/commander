@@ -437,7 +437,7 @@ def login():
     adminAccount["sessions"].append(session)
     adminAccount.save()
     # return authentication token and expiration date
-    log.info(f"[{request.remote_addr}] successfully logged in and generated a new session token")
+    log.info(f"[{request.remote_addr}] successfully logged in and generated a new session token for '{request.json['username']}'")
     return {"token": newToken, "expires": expiration}, 200
 
 
@@ -450,17 +450,20 @@ def updateCredentials():
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
     if not adminQuery:
+        log.info(f"[{request.remote_addr}] failed to update credentials because the username does not exist")
         return {"error": "username not found"}, 401
     adminAccount = adminQuery[0]
     # hash password and check match
     if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["passwordHash"].encode()):
         # TODO: implement brute force protection
+        log.info(f"[{request.remote_addr}] failed to update credentials because the password was incorrect")
         return {"error": "password does not match"}, 401
     # change password and save to the database
     salt = bcrypt.gensalt()
     hashedPassword = bcrypt.hashpw(request.json["newPassword"].encode(), salt)
     adminAccount["passwordHash"] = hashedPassword.decode()
     adminAccount.save()
+    log.info(f"[{request.remote_addr}] successfully updated credentials for '{request.json['username']}'")
     return {"success": "successfully changed the password for your account"}, 200
 
 
