@@ -239,6 +239,7 @@ def getJobResults():
     # check db for matching agent
     agentQuery = Agent.objects(agentID__exact=request.json["agentID"])
     if not agentQuery:
+        log.warning(f"[{request.remote_addr}] agentID not found in database")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     # get all jobs that have executed in the last 7 days (or specified time)
@@ -249,6 +250,7 @@ def getJobResults():
     jobHistoryQuery = list(filter(lambda job: timestampToDatetime(job["timeEnded"]) > datetime.utcnow() - timedelta(days=daysAgo), agent["jobsHistory"]))
     # convert to json
     jobHistory = convertDocsToJson(jobHistoryQuery)
+    log.info(f"[{request.remote_addr}] returning {len(jobHistory)} jobs from agent {request.json['agentID']}'s history")
     return {"jobs": jobHistory}, 200
 
 
@@ -261,16 +263,19 @@ def postJobResults():
     # check db for matching job
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
+        log.warning(f"[{request.remote_addr}] agentID not found in database")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     finishedJob = json.loads(request.json["job"])
     jobRunningQuery = list(filter(lambda job: job["filename"] == finishedJob["filename"], agent["jobsRunning"]))
     if not jobRunningQuery:
+        log.warning(f"[{request.remote_addr}] agent does not have a running job with the given filename")
         return {"error": "no matching jobs were supposed to be running"}, 400
     agent.update(pull__jobsRunning=jobRunningQuery[0])
     completedJob = Job(**finishedJob)
     agent.jobsHistory.append(completedJob)
     agent.save()
+    log.info(f"[{request.remote_addr}] agent {request.headers['Agent-ID']} has finished job '{finishedJob['filename']}'")
     return {"success": "successfully saved job response"}, 200
 
 
