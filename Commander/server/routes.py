@@ -391,9 +391,11 @@ def deleteJob():
     # make sure job exists
     library = Library.objects().first()
     if not library:
+        log.warning(f"[{request.remote_addr}] failed to delete job because the library is empty")
         return {"error": "there are no jobs in the library yet"}, 400
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
     if not jobsQuery:
+        log.warning(f"[{request.remote_addr}] failed to delete job because the job does not exist")
         return {"error": "no existing job with that file name"}, 400
     job = jobsQuery[0]
     # delete executable from file system
@@ -404,6 +406,7 @@ def deleteJob():
     # remove library if empty
     if not Library.objects().first()["jobs"]:
         library.delete()
+    log.info(f"[{request.remote_addr}] deleted job '{request.json['filename']}' from library")
     return {"success": "successfully deleted the job from the library"}, 200
 
 
