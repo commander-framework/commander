@@ -352,24 +352,29 @@ def updateJob():
     # make sure library exists
     library = Library.objects().first()
     if not library:
+        log.warning(f"[{request.remote_addr}] failed to update job because the library is empty")
         return {"error": "there is no job library yet"}, 400
     # make sure job exists
     jobsQuery = list(filter(lambda job: job["filename"] == request.form["filename"], library["jobs"]))
     if not jobsQuery:
+        log.warning(f"[{request.remote_addr}] failed to update job because the job does not exist")
         return {"error": "no existing job with that file name"}, 400
     # make sure request either updates the file or the description
     if "file" not in request.files and "description" not in request.form:
+        log.warning(f"[{request.remote_addr}] failed to update job because no filename or description was provided")
         return {"error": "niether a new file nor a new description was provided"}, 400
     # save new executable if it was provided
     if "file" in request.files:
         uploadedFile = request.files["file"]
         uploadedFile.save(app.config["UPLOADS_DIR"] + request.form["filename"])
+        log.info(f"[{request.remote_addr}] updated job file for '{request.form['filename']}'")
     # update library description for file if a new one was provided
     if "description" in request.form:
         job = jobsQuery[0]
         job["description"] = request.form["description"]
         job["timeCreated"] = utcNowTimestamp()
         library.save()
+        log.info(f"[{request.remote_addr}] updated job description for '{request.form['filename']}'")
     return {"success": "successfully updated the job in the library"}, 200
 
 
