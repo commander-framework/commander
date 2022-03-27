@@ -209,15 +209,19 @@ def sendExecutable():
     # check db for matching job
     agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
     if not agentQuery:
+        log.warning(f"[{request.remote_addr}] agentID not found in database")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], agent["jobsRunning"]))
     if not jobsQuery:
+        log.warning(f"[{request.remote_addr}] agent does not have a job with the given filename")
         return {"error": "no matching job available for download"}, 400
     # make sure file exists
     if not path.exists(app.config["UPLOADS_DIR"] + path.sep + jobsQuery[0]["filename"]):
+        log.error(f"[{request.remote_addr}] file '{jobsQuery[0]['filename']}' does not exist")
         return {"error": "job file missing -- please contact an administrator"}, 500
     # matching job found -- send executable to the agent
+    log.info(f"[{request.remote_addr}] sending file '{jobsQuery[0]['filename']}' to agent")
     return send_from_directory(directory=app.config["UPLOADS_DIR"],
                                path=jobsQuery[0]["filename"])
 
