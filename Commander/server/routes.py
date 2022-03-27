@@ -19,6 +19,7 @@ import zipfile
 @app.get("/agent/installer")
 def sendAgentInstaller():
     """ Fetch or generate an agent installer for the given operating system """
+    log.debug(f"<{request.remote_addr}> requesting an agent installer")
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["os"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -50,6 +51,7 @@ def sendAgentInstaller():
 
 def getLatestAgentInstallers(version):
     """ Gets the latest agent installers from GitHub """
+    log.debug(f"fetching latest agent installers for commander agent {version}")
     # get client cert from CAPy if we don't already have it
     if not path.exists("agent/certs/client.crt") or not path.exists("agent/certs/client.key") or not path.exists("agent/certs/root.crt"):
         response = requests.get("http://" + app.config["CA_HOSTNAME"] + "/ca/host-certificate",
@@ -89,6 +91,7 @@ def getLatestAgentInstallers(version):
 @app.post("/agent/register")
 def registerNewAgent():
     """ Register a new agent with the commander server """
+    log.debug(f"<{request.remote_addr}> registering a new agent")
     if missingParams := missing(request, data=["registrationKey", "hostname", "os"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -115,6 +118,7 @@ def registerNewAgent():
 @sock.route("/agent/checkin")
 def agentCheckin(ws):
     """ Agent checking in -- send file to be executed if a job is waiting """
+    log.debug(f"<{ws.sock.getpeername()[0]}> agent checking in")
     # get agent ID from socket
     while True:
         data = ws.receive()
@@ -169,6 +173,7 @@ def agentCheckin(ws):
 @app.post("/agent/jobs")
 def assignJob():
     """ Admin submitting a job -- add job to the specified agent's queue """
+    log.debug(f"<{request.remote_addr}> assigning a job")
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID", "filename", "argv"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -203,6 +208,7 @@ def assignJob():
 @app.get("/agent/execute")
 def sendExecutable():
     """ Send executable or script to the agent for execution """
+    log.debug(f"<{request.remote_addr}> sending executable")
     if missingParams := missing(request, headers=["Agent-ID"], data=["filename"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -229,6 +235,7 @@ def sendExecutable():
 @app.get("/agent/history")
 def getJobResults():
     """ Get all jobs that have executed in the last 7 days, or optionally specify a different amount of time """
+    log.debug(f"<{request.remote_addr}> getting job results")
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -257,6 +264,7 @@ def getJobResults():
 @app.post("/agent/history")
 def postJobResults():
     """ Job has been executed -- save output and return code """
+    log.debug(f"<{request.remote_addr}> saving job results")
     if missingParams := missing(request, headers=["Agent-ID"], data=["job"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -282,6 +290,7 @@ def postJobResults():
 @app.get("/admin/library")
 def getJobLibrary():
     """ Return simplified library overview in json format """
+    log.debug(f"<{request.remote_addr}> getting job library")
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -301,6 +310,7 @@ def getJobLibrary():
 @app.post("/admin/library")
 def addNewJob():
     """ Add a new executable to the Commander library """
+    log.debug(f"<{request.remote_addr}> adding new job")
     if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["job", "file"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -342,6 +352,7 @@ def addNewJob():
 @app.patch("/admin/library")
 def updateJob():
     """ Update the file or description of an existing entry in the commander library """
+    log.debug(f"<{request.remote_addr}> updating job")
     if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["filename"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -381,6 +392,7 @@ def updateJob():
 @app.delete("/admin/library")
 def deleteJob():
     """ Delete an entry and its corresponding file from the commander library """
+    log.debug(f"<{request.remote_addr}> deleting job")
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -413,6 +425,7 @@ def deleteJob():
 @app.post("/admin/login")
 def login():
     """ Authenticate an admin and return a new session token if successful """
+    log.debug(f"<{request.remote_addr}> logging in")
     if missingParams := missing(request, data=["username", "password"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -444,6 +457,7 @@ def login():
 @app.patch("/admin/login")
 def updateCredentials():
     """ Authenticate an admin and update that admin's credentials """
+    log.debug(f"<{request.remote_addr}> updating credentials")
     if missingParams := missing(request, data=["username", "password", "newPassword"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -470,6 +484,7 @@ def updateCredentials():
 @app.post("/admin/account")
 def newAdmin():
     """ Create a new admin account using valid session """
+    log.debug(f"<{request.remote_addr}> creating new admin account")
     if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["username", "password", "name"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -496,6 +511,7 @@ def newAdmin():
 @app.get("/admin/authenticate")
 def testAuthentication():
     """ Authenticate using session token to test and see if it is still valid """
+    log.debug(f"<{request.remote_addr}> testing authentication token")
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -510,6 +526,7 @@ def testAuthentication():
 @app.get("/admin/registration-key")
 def getRegistrationKey():
     """ Get or generate the registration key that agents need to register with commander """
+    log.debug(f"<{request.remote_addr}> getting registration key")
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -526,13 +543,14 @@ def getRegistrationKey():
     regKey = RegistrationKey(regKey=newKey)
     regKey.save()
     # return new key
-    log.info(f"<{request.remote_addr}> successfully generated a new registration key")
+    log.info(f"<{request.remote_addr}> successfully fetched registration key")
     return {"registration-key": newKey}
 
 
 @app.put("/admin/registration-key")
 def updateRegistrationKey():
     """ Generate and return a new registration key that agents need to register with commander """
+    log.debug(f"<{request.remote_addr}> updating registration key")
     if missingParams := missing(request, headers=["Auth-Token", "Username"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
@@ -567,6 +585,7 @@ def authenticate(authToken, username):
     session = sessionQuery[0]
     if timestampToDatetime(session["expires"]) < datetime.utcnow():
         return None
+    log.info(f"successfully authenticated '{username}' with auth token")
     return session["username"]
 
 
