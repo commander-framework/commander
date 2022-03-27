@@ -321,8 +321,8 @@ def addNewJob():
     # create library if it doesn't already exist
     libraryQuery = Library.objects()
     if not libraryQuery:
+        log.info(f"[{request.remote_addr}] library is empty, initializing libary")
         library = Library(jobs=[])
-        library.save()
     else:
         library = libraryQuery[0]
     # check if filename already exists in the library
