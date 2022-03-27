@@ -34,6 +34,7 @@ def sendAgentInstaller():
     # check what the latest version is
     response = requests.get("https://github.com/lawndoc/commander/releases/latest/download/version.txt", allow_redirects=True)
     if response.status_code != 200:
+        log.error("failed to fetch agent version information from GitHub")
         return {"error": "failed to get agent version information from GitHub"}, 500
     version = response.content.decode("utf-8").strip()
     # check if we have the newest installers
@@ -43,6 +44,7 @@ def sendAgentInstaller():
         except CommanderError as e:
             log.error(e)
             return {"error": str(e)}, 500
+    log.info(f"[{request.remote_addr}] sending agent installer for {targetOS}")
     return send_from_directory(f"agent/installers/{version}/{filename}", filename=filename), 200
 
 
@@ -93,9 +95,12 @@ def registerNewAgent():
     # check registration key
     regKey = RegistrationKey.objects().first()
     if not regKey:
+        log.error("no agent registration key found")
         return {"error": "no registration key has been generated yet"}, 500
     if regKey["regKey"] != request.json["registrationKey"]:
+        log.warning(f"[{request.remote_addr}] invalid registration key")
         return {"error": "invalild registration key"}, 401
+    # TODO: make sure OS is valid
     # create agent doc and add it to the db
     newAgent = Agent(hostname=request.json["hostname"],
                      agentID=str(uuid4()),
@@ -103,6 +108,7 @@ def registerNewAgent():
                      lastCheckin=utcNowTimestamp())
     newAgent.save()
     # return agent ID
+    log.info(f"[{request.remote_addr}] registered new agent {newAgent['agentID']}")
     return {"agentID": newAgent["agentID"]}
 
 
