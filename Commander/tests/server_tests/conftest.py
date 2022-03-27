@@ -2,7 +2,7 @@ import bcrypt
 import os
 import pytest
 from server import app, agentDB, adminDB
-from server.models import Job, Library, Agent, RegistrationKey, Session, User
+from server.models import Job, Library, Agent, RegistrationKey, User
 import tempfile
 from utils import utcNowTimestamp
 from uuid import uuid4
@@ -69,19 +69,24 @@ def sample_RegistrationKey():
 
 
 @pytest.fixture
-def sample_valid_Session():
-    session = Session(username="testuser",
-                      authToken=str(uuid4()),
-                      expires=utcNowTimestamp(deltaHours=1))
-    return session
+def sample_valid_JWT():
+    # token generated with https://jwt.io/#debugger-io using default secret key
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.fTNmI6XjfES0SYawD41fUBSzzZheBs7A1ntD6JNuRhI"
+    return token
 
 
 @pytest.fixture
-def sample_expired_Session():
-    session = Session(username="testuser",
-                      authToken=str(uuid4()),
-                      expires=utcNowTimestamp(deltaHours=-1))
-    return session
+def sample_bad_sig_JWT():
+    # token generated with https://jwt.io/#debugger-io using bad secret key
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    return token
+
+
+@pytest.fixture
+def sample_expired_JWT():
+    # token generated with https://jwt.io/#debugger-io using default secret key
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzk5OTB9.qYidunY1JWO58V-LfgT_yWrKgcowodGp_ucFvL4hCOE"
+    return token
 
 
 @pytest.fixture
@@ -91,6 +96,5 @@ def sample_User():
     hashedPass = bcrypt.hashpw(samplePass.encode(), salt)
     user = User(name="Test User",
                 username="testuser",
-                passwordHash=hashedPass.decode(),
-                sessions=[])
+                passwordHash=hashedPass.decode())
     return user

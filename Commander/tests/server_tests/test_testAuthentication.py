@@ -1,12 +1,11 @@
 import json
 
 
-def testValidJWT(client):
+def testValidJWT(client, sample_valid_JWT):
     # test authentication with a valid JWT
     response = client.get("/admin/authenticate",
                           headers={"Content-Type": "application/json",
-                                   # token generated with https://jwt.io/#debugger-io using default secret key
-                                   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.fTNmI6XjfES0SYawD41fUBSzzZheBs7A1ntD6JNuRhI"},
+                                   "Authorization": f"Bearer {sample_valid_JWT}"},
                           data=json.dumps({}))
     assert response.status_code == 200
     assert response.json["success"] == "authentication token is valid"
@@ -31,21 +30,21 @@ def testInvalidJWT(client):
     assert response.json["msg"][:23] == "Invalid header string: "
 
 
-def testBadSignatureJWT(client):
+def testBadSignatureJWT(client, sample_bad_sig_JWT):
     # test authentication with a fake JWT in valid format
     response = client.get("/admin/authenticate",
                           headers={"Content-Type": "application/json",
-                                   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"},
+                                   "Authorization": f"Bearer {sample_bad_sig_JWT}"},
                           data=json.dumps({}))
     assert response.status_code == 422
     assert response.json["msg"] == "Signature verification failed"
 
 
-def testExpiredJWT(client):
+def testExpiredJWT(client, sample_expired_JWT):
     # test authentication with an expired JWT
     response = client.get("/admin/authenticate",
                           headers={"Content-Type": "application/json",
-                                   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzk5OTB9.qYidunY1JWO58V-LfgT_yWrKgcowodGp_ucFvL4hCOE"},
+                                   "Authorization": f"Bearer {sample_expired_JWT}"},
                           data=json.dumps({}))
     assert response.status_code == 401
     assert response.json["msg"] == "Token has expired"
