@@ -1,5 +1,6 @@
 from config import Config
 from flask import Flask
+from flask_jwt_extended import JWTManager
 from flask_sock import Sock
 from .jobBoard import JobBoard
 import logging
@@ -9,6 +10,7 @@ from mongoengine import connect
 app = Flask(__name__)
 app.config.from_object(Config)
 sock = Sock(app)
+jwt = JWTManager(app)
 
 # set logging options
 level = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL][5-Config.LOG_LEVEL]

@@ -2,6 +2,7 @@ import bcrypt
 from datetime import datetime, timedelta
 from .errors import CommanderError, CAPyError, GitHubError
 from flask import request, send_from_directory
+from flask_jwt_extended import create_access_token, jwt_required
 import json
 from .models import Agent, Job, Library, RegistrationKey, Session, User
 from mongoengine import DoesNotExist
