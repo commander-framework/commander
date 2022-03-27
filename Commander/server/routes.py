@@ -480,6 +480,7 @@ def newAdmin():
     # make sure username doesn't already exist
     adminQuery = User.objects(username__exact=request.json["username"])
     if adminQuery:
+        log.warning(f"[{request.remote_addr}] failed to create account because the username already exists")
         return {"error": "username already taken"}, 400
     # hash password and save to the database
     salt = bcrypt.gensalt()
@@ -488,6 +489,7 @@ def newAdmin():
                         username=request.json["username"],
                         passwordHash=hashedPassword.decode())
     adminAccount.save()
+    log.info(f"[{request.remote_addr}] successfully created a new admin account for '{request.json['username']}'")
     return {"success": "successfully created new admin account"}, 200
 
 
