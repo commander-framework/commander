@@ -38,4 +38,5 @@ adminDB = connect(db="admins",
 # initialize jobBoard cache
 jobsCache = JobBoard()
 
+from . import errors
 from . import routes
