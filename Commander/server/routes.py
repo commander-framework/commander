@@ -419,11 +419,13 @@ def login():
     # make sure username exists
     adminQuery = User.objects(username__exact=request.json["username"])
     if not adminQuery:
+        log.info(f"[{request.remote_addr}] failed to login because the username does not exist")
         return {"error": "username not found"}, 401
     adminAccount = adminQuery[0]
     # hash password and check match
     if not bcrypt.checkpw(request.json["password"].encode(), adminAccount["passwordHash"].encode()):
         # TODO: implement brute force protection
+        log.info(f"[{request.remote_addr}] failed to login because the password was incorrect")
         return {"error": "password does not match"}, 401
     # generate session and set expiration
     newToken = str(uuid4())
@@ -435,6 +437,7 @@ def login():
     adminAccount["sessions"].append(session)
     adminAccount.save()
     # return authentication token and expiration date
+    log.info(f"[{request.remote_addr}] successfully logged in and generated a new session token")
     return {"token": newToken, "expires": expiration}, 200
 
 
