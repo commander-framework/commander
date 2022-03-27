@@ -503,6 +503,7 @@ def testAuthentication():
     if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
         log.info(f"[{request.remote_addr}] invalid or expired auth token")
         return {"error": "invalid auth token or token expired"}, 401
+    log.info(f"[{request.remote_addr}] successfully authenticated '{request.headers['Username']}' for testing")
     return {"success": "authentication token is valid"}, 200
 
 
