@@ -179,11 +179,11 @@ def assignJob():
     # get job document from the db
     library = Library.objects().first()
     if not library:
-        log.warning("failed to assign a job because the library is empty")
+        log.warning(f"[{request.remote_addr}] failed to assign a job because the library is empty")
         return {"error": "there are no jobs in the library yet"}, 400
     jobsQuery = list(filter(lambda job: job["filename"] == request.json["filename"], library["jobs"]))
     if not jobsQuery:
-        log.warning("failed to assign a job because it was not found in the library")
+        log.warning(f"[{request.remote_addr}] failed to assign a job because it was not found in the library")
         return {"error": "the library contains no executable with the given filename"}, 400
     job = jobsQuery[0]
     argv = request.json["argv"]   # TODO: error handling (should be list of strings)
@@ -196,7 +196,7 @@ def assignJob():
     except ValueError as e:
         log.warning(f"failed to assign job to agent: {e}")
         return {"error": str(e)}, 400
-    log.info(f"assigned job '{job['filename']}' to agent {request.json['agentID']}")
+    log.info(f"[{request.remote_addr}] assigned job '{job['filename']}' to agent {request.json['agentID']}")
     return {"success": "job successfully submitted -- waiting for agent to check in"}, 200
 
 
