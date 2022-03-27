@@ -121,7 +121,8 @@ def agentCheckin(ws):
         # validate that json data was sent
         try:
             jsonData = json.loads(data)
-        except Exception as e:
+        except Exception:
+            log.warning(f"[{ws.sock.getpeername()[0]}] invalid json data received from agent during checkin")
             ws.close(400, json.dumps({"error": "message was not a valid json object"}))
             return {"error": "message was not a valid json object"}
         # convert data to request-like object for missing()
@@ -135,6 +136,7 @@ def agentCheckin(ws):
         # make sure Agent ID exists in the DB
         agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
         if not agentQuery:
+            log.warning(f"[{request.remote_addr}] agentID not found in database")
             ws.close(400, json.dumps({"error": "agent ID not found, please check ID or register"}))
             return {"error": "agent ID not found, please check ID or register"}
         break
@@ -148,12 +150,14 @@ def agentCheckin(ws):
             sleep(1)
             continue
         # send most recent job to agent
+        log.info(f"[{request.remote_addr}] sending job '{job['filename']}' to agent")
         ws.send(json.dumps({"job": job.to_json()}))
         # wait for acknowledgement from agent before marking job as running
         ack = ws.receive()
         if ack != "ack":
             continue
         # mark job as received by the agent
+        log.info(f"[{request.remote_addr}] marking job '{job['filename']}' as received by agent")
         jobsCache.markSent(agent["agentID"])
         # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
         try:
