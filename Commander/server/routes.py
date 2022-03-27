@@ -1,8 +1,6 @@
-from multiprocessing import ProcessError
-from xml.dom import ValidationErr
-from xmlrpc.client import ResponseError
 import bcrypt
 from datetime import datetime, timedelta
+from .errors import CommanderError, CAPyError, GitHubError
 from flask import request, send_from_directory
 import json
 from .models import Agent, Job, Library, RegistrationKey, Session, User
@@ -41,7 +39,7 @@ def sendAgentInstaller():
     if not path.exists(f"agent/installers/{version}/{filename}"):
         try:
             getLatestAgentInstallers(version)
-        except Exception as e:
+        except CommanderError as e:
             log.error(e)
             return {"error": str(e)}, 500
     return send_from_directory(f"agent/installers/{version}/{filename}", filename=filename), 200
@@ -53,9 +51,9 @@ def getLatestAgentInstallers(version):
     if not path.exists("agent/certs/client.crt") or not path.exists("agent/certs/client.key") or not path.exists("agent/certs/root.crt"):
         response = requests.get("http://" + app.config["CA_HOSTNAME"] + "/ca/host-certificate",
                                 headers={"Content-Type": "application/json"},
-                                data={"hostname": "agent"})
+                                data={"hostname": "installer"})
         if response.status_code != 200:
-            raise ResponseError("failed to get agent cert from CAPy")
+            raise CAPyError("failed to get installer cert from CAPy")
         with open("agent/certs/client.crt", "w") as f:
             f.write(response.json["cert"])
         with open("agent/certs/client.key", "w") as f:
@@ -65,16 +63,17 @@ def getLatestAgentInstallers(version):
     # get installers from GitHub
     with requests.get(f"https://github.com/lawndoc/commander/releases/download/{version}/windowsInstaller.zip") as response:
         if response.status_code != 200:
-            raise ResponseError("failed to get windows installer from GitHub")
+            raise GitHubError("failed to get windows installer from GitHub")
         with open(f"agent/installers/{version}/windowsInstaller.zip", 'wb') as f:
             shutil.copyfileobj(response.raw, f)
     with requests.get(f"https://github.com/lawndoc/commander/releases/download/{version}/linuxInstaller.zip") as response:
         if response.status_code != 200:
-            raise ResponseError("failed to get linux installer from GitHub")
+            raise GitHubError("failed to get linux installer from GitHub")
         with open(f"agent/installers/{version}/linuxInstaller.zip", 'wb') as f:
             shutil.copyfileobj(response.raw, f)
     # add certs to installer zips
     with zipfile.ZipFile(f"agent/installers/{version}/windowsInstaller.zip", 'a') as windowsZip:
+        # TODO: I think I need to convert line endings here before adding the files
         windowsZip.write("agent/certs/client.crt", arcname="client.crt")
         windowsZip.write("agent/certs/client.key", arcname="client.key")
         windowsZip.write("agent/certs/root.crt", arcname="root.crt")
