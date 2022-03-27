@@ -310,10 +310,12 @@ def addNewJob():
         return {"error": "invalid auth token or token expired"}, 401
     # generate library entry document
     if "file" not in request.files:
+        log.warning(f"[{request.remote_addr}] no file uploaded with new job")
         return {"error": "file not uploaded with request"}, 400
     newJob = json.loads(request.form["job"])
     # make sure job includes all required fields
     if missingFields := missingJobFields(newJob):
+        log.warning(f"[{request.remote_addr}] {missingFields}")
         return {"error": missingFields}, 400
     libraryEntry = Job(**newJob)
     # create library if it doesn't already exist
@@ -326,12 +328,14 @@ def addNewJob():
     # check if filename already exists in the library
     jobsQuery = list(filter(lambda job: job["filename"] == libraryEntry["filename"], library["jobs"]))
     if jobsQuery:
+        log.warning(f"[{request.remote_addr}] filename already exists in the job library")
         return {"error": "file name already exists in the library"}, 400
     # save executable file to server and job entry to libary
     uploadedFile = request.files["file"]
     uploadedFile.save(app.config["UPLOADS_DIR"] + libraryEntry["filename"])
     library["jobs"].append(libraryEntry)
     library.save()
+    log.info(f"[{request.remote_addr}] added new job '{libraryEntry['filename']}' to library")
     return {"success": "successfully added new executable to the commander library"}, 200
 
 
