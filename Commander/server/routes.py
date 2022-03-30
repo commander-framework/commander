@@ -4,7 +4,7 @@ from .errors import CommanderError, CAPyError, GitHubError
 from flask import request, send_from_directory
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 import json
-from .models import Agent, Job, Library, RegistrationKey, Session, User
+from .models import Agent, Job, Library, RegistrationKey, User
 from mongoengine import DoesNotExist
 from os import path, remove
 import requests
@@ -484,17 +484,13 @@ def updateCredentials():
 
 
 @app.post("/admin/account")
+@jwt_required()
 def newAdmin():
     """ Create a new admin account using valid session """
     log.debug(f"<{request.remote_addr}> creating new admin account")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["username", "password", "name"]):
+    if missingParams := missing(request, data=["username", "password", "name"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
-    # make sure username doesn't already exist
     adminQuery = User.objects(username__exact=request.json["username"])
     if adminQuery:
         log.warning(f"<{request.remote_addr}> failed to create account because the username already exists")
@@ -514,16 +510,7 @@ def newAdmin():
 @jwt_required()
 def testAuthentication():
     """ Authenticate using session token to test and see if it is still valid """
-    # log.debug(f"<{request.remote_addr}> testing authentication token")
-    # if missingParams := missing(request, headers=["Authorization"]):
-    #     log.warning(f"<{request.remote_addr}> {missingParams}")
-    #     return {"error": missingParams}, 400
-    # # check admin authentication token
-    # if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-    #     log.info(f"<{request.remote_addr}> invalid or expired auth token")
-    #     return {"error": "invalid auth token or token expired"}, 401
-    currentUser = get_jwt_identity()
-    log.info(f"<{request.remote_addr}> successfully authenticated '{currentUser}' for testing")
+    log.info(f"<{request.remote_addr}> successfully test authenticated '{get_jwt_identity()}' with a valid JWT")
     return {"success": "authentication token is valid"}, 200
 
 
