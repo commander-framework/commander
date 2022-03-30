@@ -4,11 +4,8 @@ from os import sep
 from tempfile import gettempdir
 
 
-def testUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_Session, sample_User):
+def testUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     jobFile = sample_JobFile  # creates existing job file in temp directory
     library = sample_Library
     library["jobs"].append(sample_Job)
@@ -19,16 +16,14 @@ def testUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_val
             "file": (io.BytesIO(b"updated content"), "testfile")}
     response = client.patch("/admin/library",
                            headers={"Content-Type": "multipart/form-data",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=data)
     assert response.status_code == 200
     assert response.json["success"] == "successfully updated the job in the library"
     # get library jobs to validate that job saved successfully
     response = client.get("/admin/library",
                            headers={"Content-Type": "application/json",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({}))
     assert response.status_code == 200
     libraryDoc = json.loads(response.json["library"])
@@ -46,51 +41,21 @@ def testUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_val
         assert testfile.read() == b"updated content"
 
 
-def testExpiredSessionUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_expired_Session, sample_User):
-    # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_expired_Session)
-    user.save()
-    jobFile = sample_JobFile  # creates existing job file in temp directory
-    library = sample_Library
-    library["jobs"].append(sample_Job)
-    library.save()
+def testNoLibraryUpdateJob(client, sample_Job, sample_valid_JWT):
     # update existing job in the library
     data = {"filename": sample_Job["filename"],
             "description": "updated description",
             "file": (io.BytesIO(b"updated content"), "testfile")}
     response = client.patch("/admin/library",
                            headers={"Content-Type": "multipart/form-data",
-                                    "Auth-Token": sample_expired_Session["authToken"],
-                                    "Username": sample_expired_Session["username"]},
-                           data=data)
-    assert response.status_code == 401
-    assert response.json["error"] == "invalid auth token or token expired"
-
-
-def testNoLibraryUpdateJob(client, sample_Job, sample_valid_Session, sample_User):
-    # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
-    # update existing job in the library
-    data = {"filename": sample_Job["filename"],
-            "description": "updated description",
-            "file": (io.BytesIO(b"updated content"), "testfile")}
-    response = client.patch("/admin/library",
-                           headers={"Content-Type": "multipart/form-data",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=data)
     assert response.status_code == 400
     assert response.json["error"] == "there is no job library yet"
 
 
-def testBadFilenameUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_Session, sample_User):
+def testBadFilenameUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     jobFile = sample_JobFile  # creates existing job file in temp directory
     library = sample_Library
     library["jobs"].append(sample_Job)
@@ -101,18 +66,14 @@ def testBadFilenameUpdateJob(client, sample_Job, sample_JobFile, sample_Library,
             "file": (io.BytesIO(b"updated content"), "testfile")}
     response = client.patch("/admin/library",
                            headers={"Content-Type": "multipart/form-data",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=data)
     assert response.status_code == 400
     assert response.json["error"] == "no existing job with that file name"
 
 
-def testNothingNewUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_Session, sample_User):
+def testNothingNewUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     jobFile = sample_JobFile  # creates existing job file in temp directory
     library = sample_Library
     library["jobs"].append(sample_Job)
@@ -121,18 +82,14 @@ def testNothingNewUpdateJob(client, sample_Job, sample_JobFile, sample_Library, 
     data = {"filename": sample_Job["filename"]}
     response = client.patch("/admin/library",
                            headers={"Content-Type": "multipart/form-data",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=data)
     assert response.status_code == 400
     assert response.json["error"] == "niether a new file nor a new description was provided"
 
 
-def testMissingFieldsUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_Session, sample_User):
+def testMissingFieldsUpdateJob(client, sample_Job, sample_JobFile, sample_Library, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     jobFile = sample_JobFile  # creates existing job file in temp directory
     library = sample_Library
     library["jobs"].append(sample_Job)
@@ -141,7 +98,8 @@ def testMissingFieldsUpdateJob(client, sample_Job, sample_JobFile, sample_Librar
     data = {"description": "updated description",
             "file": (io.BytesIO(b"updated content"), "testfile")}
     response = client.patch("/admin/library",
-                           headers={"Content-Type": "multipart/form-data"},
+                           headers={"Content-Type": "multipart/form-data",
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=data)
     assert response.status_code == 400
-    assert response.json["error"] == "request is missing the following parameters: headers=['Auth-Token', 'Username'], data=['filename']"
+    assert response.json["error"] == "request is missing the following parameters: data=['filename']"

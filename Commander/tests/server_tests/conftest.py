@@ -71,7 +71,7 @@ def sample_RegistrationKey():
 @pytest.fixture
 def sample_valid_JWT():
     # token generated with https://jwt.io/#debugger-io using default secret key
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.fTNmI6XjfES0SYawD41fUBSzzZheBs7A1ntD6JNuRhI"
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.DaLVgOpbaxsenHiV0LVW3D1z07TbDwo8qOp3OtoqACk"
     return token
 
 
