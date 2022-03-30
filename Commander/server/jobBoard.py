@@ -15,7 +15,7 @@ class JobBoard:
             sleep(1)
         self.mutex = True
         if not agentID and not groupID:
-            raise ValueError("must specify either agentID or groupID when assigning a job.")
+            raise ValueError("must specify either agentID or groupID when assigning a job")
         # add job to DB and cache
         if agentID:
             if agentID in self.jobAssignments["agents"]:
