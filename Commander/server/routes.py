@@ -547,7 +547,7 @@ def missing(request, headers=None, data=None):
     return errMsg
 
 
-def missingJobForm(request, headers=None, data=None):
+def missingJobForm(request, data=None):
     """ Return error message about missing paramaters if there are any """
     missingData = []
     if data:
