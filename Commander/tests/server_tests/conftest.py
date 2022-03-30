@@ -2,6 +2,7 @@ import bcrypt
 import os
 import pytest
 from server import app, agentDB, adminDB
+from server.jobBoard import JobBoard
 from server.models import Job, Library, Agent, RegistrationKey, User
 import tempfile
 from utils import utcNowTimestamp
@@ -22,6 +23,12 @@ def client():
     app.config["LOG_LEVEL"] = 5
     app.testing = True
     yield app.test_client()
+
+
+@pytest.fixture
+def jobBoard():
+    jobsCache = JobBoard()
+    return jobsCache
 
 
 @pytest.fixture
