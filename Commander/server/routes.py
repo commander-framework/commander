@@ -34,7 +34,7 @@ def sendAgentInstaller():
     response = requests.get("https://github.com/lawndoc/commander/releases/latest/download/version.txt", allow_redirects=True)
     if response.status_code != 200:
         log.error("failed to fetch agent version information from GitHub")
-        return {"error": "failed to get agent version information from GitHub"}, 500
+        raise CommanderError("failed to fetch agent version information from GitHub")
     version = response.content.decode("utf-8").strip()
     # check if we have the newest installers
     if not path.exists(f"agent/installers/{version}/{filename}"):
@@ -42,7 +42,7 @@ def sendAgentInstaller():
             getLatestAgentInstallers(version)
         except CommanderError as e:
             log.error(e)
-            return {"error": str(e)}, 500
+            raise e
     log.info(f"<{request.remote_addr}> sending agent installer for {targetOS}")
     return send_from_directory(f"agent/installers/{version}/{filename}", filename=filename), 200
 
