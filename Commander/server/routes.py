@@ -519,22 +519,6 @@ def updateRegistrationKey():
     return {"registration-key": newKey}
 
 
-def authenticate(authToken, username):
-    """ If the given admin authentication token is valid return its username """
-    userQuery = User.objects(username__exact=username)
-    if not userQuery:
-        return None
-    user = userQuery[0]
-    sessionQuery = list(filter(lambda session: session["authToken"] == authToken, user["sessions"]))
-    if not sessionQuery:
-        return None
-    session = sessionQuery[0]
-    if timestampToDatetime(session["expires"]) < datetime.utcnow():
-        return None
-    log.info(f"successfully authenticated '{username}' with auth token")
-    return session["username"]
-
-
 def missing(request, headers=None, data=None):
     """ Return error message about missing paramaters if there are any """
     missingHeaders = []
