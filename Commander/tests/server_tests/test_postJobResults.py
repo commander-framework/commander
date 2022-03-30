@@ -3,11 +3,8 @@ import json
 from utils import utcNowTimestamp, timestampToDatetime
 
 
-def testPostResults(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
+def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     job = sample_Job
     job["timeDispatched"] = utcNowTimestamp()
@@ -29,8 +26,7 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_Session, samp
     # get finished jobs for the sample agent from the api server
     response = client.get("/agent/history",
                            headers={"Content-Type": "application/json",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
     assert response.status_code == 200
     # make sure all job fields were included from the sample job
