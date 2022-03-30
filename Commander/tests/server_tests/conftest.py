@@ -19,6 +19,7 @@ def cleanup():
 @pytest.fixture
 def client():
     app.config["UPLOADS_DIR"] = tempfile.gettempdir() + os.path.sep
+    app.config["LOG_LEVEL"] = 5
     app.testing = True
     yield app.test_client()
 
