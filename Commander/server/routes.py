@@ -443,15 +443,6 @@ def login():
         return {"error": "password does not match"}, 401
     # generate session and set expiration
     accessToken = create_access_token(identity=request.json["username"])
-    # newToken = str(uuid4())
-    # expiration = utcNowTimestamp(deltaHours=24)
-    # session = Session(username=request.json["username"],
-    #                   authToken=newToken,
-    #                   expires=expiration)
-    # # add session to admin's session history
-    # adminAccount["sessions"].append(session)
-    # adminAccount.save()
-    # return authentication token and expiration date
     log.info(f"<{request.remote_addr}> successfully logged in and generated a new session token for '{request.json['username']}'")
     return {"token": accessToken}, 200
 
