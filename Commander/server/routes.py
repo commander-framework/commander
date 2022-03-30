@@ -2,8 +2,9 @@ import bcrypt
 from datetime import datetime, timedelta
 from .errors import CommanderError, CAPyError, GitHubError
 from flask import request, send_from_directory
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 import json
-from .models import Agent, Job, Library, RegistrationKey, Session, User
+from .models import Agent, Job, Library, RegistrationKey, User
 from mongoengine import DoesNotExist
 from os import path, remove
 import requests
@@ -17,16 +18,13 @@ import zipfile
 
 
 @app.get("/agent/installer")
+@jwt_required()
 def sendAgentInstaller():
     """ Fetch or generate an agent installer for the given operating system """
     log.debug(f"<{request.remote_addr}> requesting an agent installer")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["os"]):
+    if missingParams := missing(request, data=["os"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # make sure OS is valid
     targetOS = request.json["os"]
     if targetOS not in ["linux", "windows"]:
@@ -171,16 +169,13 @@ def agentCheckin(ws):
 
 
 @app.post("/agent/jobs")
+@jwt_required()
 def assignJob():
     """ Admin submitting a job -- add job to the specified agent's queue """
-    log.debug(f"<{request.remote_addr}> assigning a job")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID", "filename", "argv"]):
+    log.debug(f"<{request.remote_addr}> {get_jwt_identity()} assigning a job")
+    if missingParams := missing(request, data=["agentID", "filename", "argv"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # get job document from the db
     library = Library.objects().first()
     if not library:
@@ -192,7 +187,7 @@ def assignJob():
         return {"error": "the library contains no executable with the given filename"}, 400
     job = jobsQuery[0]
     argv = request.json["argv"]   # TODO: error handling (should be list of strings)
-    job["user"] = request.headers["Username"]
+    job["user"] = get_jwt_identity()
     job["argv"] = argv
     job["timeCreated"] = utcNowTimestamp()
     # add job to the agent's queue
@@ -201,7 +196,7 @@ def assignJob():
     except ValueError as e:
         log.warning(f"failed to assign job to agent: {e}")
         return {"error": str(e)}, 400
-    log.info(f"<{request.remote_addr}> assigned job '{job['filename']}' to agent {request.json['agentID']}")
+    log.info(f"<{request.remote_addr}> {get_jwt_identity()} assigned job '{job['filename']}' to agent {request.json['agentID']}")
     return {"success": "job successfully submitted -- waiting for agent to check in"}, 200
 
 
@@ -233,16 +228,13 @@ def sendExecutable():
 
 
 @app.get("/agent/history")
+@jwt_required()
 def getJobResults():
     """ Get all jobs that have executed in the last 7 days, or optionally specify a different amount of time """
     log.debug(f"<{request.remote_addr}> getting job results")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["agentID"]):
+    if missingParams := missing(request, data=["agentID"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # check db for matching agent
     agentQuery = Agent.objects(agentID__exact=request.json["agentID"])
     if not agentQuery:
@@ -288,16 +280,10 @@ def postJobResults():
 
 
 @app.get("/admin/library")
+@jwt_required()
 def getJobLibrary():
     """ Return simplified library overview in json format """
     log.debug(f"<{request.remote_addr}> getting job library")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"<{request.remote_addr}> {missingParams}")
-        return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     try:
         library = Library.objects().get()
     except DoesNotExist:
@@ -308,16 +294,13 @@ def getJobLibrary():
 
 
 @app.post("/admin/library")
+@jwt_required()
 def addNewJob():
     """ Add a new executable to the Commander library """
     log.debug(f"<{request.remote_addr}> adding new job")
-    if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["job", "file"]):
+    if missingParams := missingJobForm(request, data=["job", "file"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # generate library entry document
     if "file" not in request.files:
         log.warning(f"<{request.remote_addr}> no file uploaded with new job")
@@ -350,16 +333,13 @@ def addNewJob():
 
 
 @app.patch("/admin/library")
+@jwt_required()
 def updateJob():
     """ Update the file or description of an existing entry in the commander library """
     log.debug(f"<{request.remote_addr}> updating job")
-    if missingParams := missingJobForm(request, headers=["Auth-Token", "Username"], data=["filename"]):
+    if missingParams := missingJobForm(request, data=["filename"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # make sure library exists
     library = Library.objects().first()
     if not library:
@@ -390,16 +370,13 @@ def updateJob():
 
 
 @app.delete("/admin/library")
+@jwt_required()
 def deleteJob():
     """ Delete an entry and its corresponding file from the commander library """
     log.debug(f"<{request.remote_addr}> deleting job")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["filename"]):
+    if missingParams := missing(request, data=["filename"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # make sure job exists
     library = Library.objects().first()
     if not library:
@@ -441,17 +418,9 @@ def login():
         log.info(f"<{request.remote_addr}> failed to login because the password was incorrect")
         return {"error": "password does not match"}, 401
     # generate session and set expiration
-    newToken = str(uuid4())
-    expiration = utcNowTimestamp(deltaHours=24)
-    session = Session(username=request.json["username"],
-                      authToken=newToken,
-                      expires=expiration)
-    # add session to admin's session history
-    adminAccount["sessions"].append(session)
-    adminAccount.save()
-    # return authentication token and expiration date
+    accessToken = create_access_token(identity=request.json["username"])
     log.info(f"<{request.remote_addr}> successfully logged in and generated a new session token for '{request.json['username']}'")
-    return {"token": newToken, "expires": expiration}, 200
+    return {"token": accessToken}, 200
 
 
 @app.patch("/admin/login")
@@ -482,17 +451,13 @@ def updateCredentials():
 
 
 @app.post("/admin/account")
+@jwt_required()
 def newAdmin():
     """ Create a new admin account using valid session """
     log.debug(f"<{request.remote_addr}> creating new admin account")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"], data=["username", "password", "name"]):
+    if missingParams := missing(request, data=["username", "password", "name"]):
         log.warning(f"<{request.remote_addr}> {missingParams}")
         return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
-    # make sure username doesn't already exist
     adminQuery = User.objects(username__exact=request.json["username"])
     if adminQuery:
         log.warning(f"<{request.remote_addr}> failed to create account because the username already exists")
@@ -509,31 +474,18 @@ def newAdmin():
 
 
 @app.get("/admin/authenticate")
+@jwt_required()
 def testAuthentication():
     """ Authenticate using session token to test and see if it is still valid """
-    log.debug(f"<{request.remote_addr}> testing authentication token")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"<{request.remote_addr}> {missingParams}")
-        return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
-    log.info(f"<{request.remote_addr}> successfully authenticated '{request.headers['Username']}' for testing")
+    log.info(f"<{request.remote_addr}> successfully test authenticated '{get_jwt_identity()}' with a valid JWT")
     return {"success": "authentication token is valid"}, 200
 
 
 @app.get("/admin/registration-key")
+@jwt_required()
 def getRegistrationKey():
     """ Get or generate the registration key that agents need to register with commander """
     log.debug(f"<{request.remote_addr}> getting registration key")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"<{request.remote_addr}> {missingParams}")
-        return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # return current key if one exists
     regKeyQuery = RegistrationKey.objects()
     if regKeyQuery:
@@ -548,16 +500,10 @@ def getRegistrationKey():
 
 
 @app.put("/admin/registration-key")
+@jwt_required()
 def updateRegistrationKey():
     """ Generate and return a new registration key that agents need to register with commander """
     log.debug(f"<{request.remote_addr}> updating registration key")
-    if missingParams := missing(request, headers=["Auth-Token", "Username"]):
-        log.warning(f"<{request.remote_addr}> {missingParams}")
-        return {"error": missingParams}, 400
-    # check admin authentication token
-    if authenticate(request.headers["Auth-Token"], request.headers["Username"]) != request.headers["Username"]:
-        log.info(f"<{request.remote_addr}> invalid or expired auth token")
-        return {"error": "invalid auth token or token expired"}, 401
     # make sure a current key exists
     regKeyQuery = RegistrationKey.objects()
     if not regKeyQuery:

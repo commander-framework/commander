@@ -1,6 +1,4 @@
-from datetime import datetime
 import json
-from utils import timestampToDatetime
 
 
 def testLogin(client, sample_User):
@@ -15,14 +13,10 @@ def testLogin(client, sample_User):
     assert response.status_code == 200
     assert "token" in response.json
     token = response.json["token"]
-    assert "expires" in response.json
-    expiration = timestampToDatetime(response.json["expires"])
-    assert expiration > datetime.now()
     # make sure a valid session was saved to the db
     response = client.get("/admin/authenticate",
                           headers={"Content-Type": "application/json",
-                                   "Auth-Token": token,
-                                   "Username": sample_User["username"]},
+                                   "Authorization": "Bearer " + token},
                           data=json.dumps({}))
     assert response.status_code == 200
     assert response.json["success"] == "authentication token is valid"

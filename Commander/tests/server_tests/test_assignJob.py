@@ -24,11 +24,8 @@ class MockServer:
         return "mock-server"
 
 
-def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
+def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     agent.save()
     library = sample_Library
@@ -37,8 +34,7 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
     # send job to api
     response = client.post("/agent/jobs",
                            headers={"Content-Type": "application/json",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
                                  "filename": sample_Job["filename"],
                                  "argv": []}))
@@ -62,41 +58,15 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
     assert dispatchTime >= createdTime
 
 
-def testExpiredSessionAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_expired_Session, sample_User):
+def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_expired_Session)
-    user.save()
-    agent = sample_Agent
-    agent.save()
-    library = sample_Library
-    library["jobs"].append(sample_Job)
-    library.save()
-    # send job to api
-    response = client.post("/agent/jobs",
-                           headers={"Content-Type": "application/json",
-                                    "Auth-Token": sample_expired_Session["authToken"],
-                                    "Username": sample_expired_Session["username"]},
-                           data=json.dumps({"agentID": sample_Agent["agentID"],
-                                 "filename": sample_Job["filename"],
-                                 "argv": []}))
-    assert response.status_code == 401
-    assert response.json["error"] == "invalid auth token or token expired"
-
-
-def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_Session, sample_User):
-    # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     agent.save()
     # intentionally not creating a library document in the database
     # send job to api
     response = client.post("/agent/jobs",
                            headers={"Content-Type": "application/json",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
                                  "filename": sample_Job["filename"],
                                  "argv": []}))
@@ -104,11 +74,8 @@ def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_Sessio
     assert response.json["error"] == "there are no jobs in the library yet"
 
 
-def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
+def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     agent.save()
     library = sample_Library
@@ -117,8 +84,7 @@ def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
     # send job to api
     response = client.post("/agent/jobs",
                            headers={"Content-Type": "application/json",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
                                  "filename": sample_Job["filename"],
                                  "argv": []}))
@@ -126,20 +92,15 @@ def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
     assert response.json["error"] == "the library contains no executable with the given filename"
 
 
-def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
-    # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
-    # intentionally not adding agent document to the library
+def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_JWT):
+    # intentionally not adding agent document to the DB
     library = sample_Library
     library["jobs"].append(sample_Job)
     library.save()
     # send job to api
     response = client.post("/agent/jobs",
                            headers={"Content-Type": "application/json",
-                                    "Auth-Token": sample_valid_Session["authToken"],
-                                    "Username": sample_valid_Session["username"]},
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
                                  "filename": sample_Job["filename"],
                                  "argv": []}))
@@ -147,11 +108,8 @@ def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
     assert response.json["error"] == "no hosts found matching the agentID in the request"
 
 
-def testMissingFieldsAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_Session, sample_User):
+def testMissingFieldsAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid_JWT):
     # prepare mongomock with relevant sample documents
-    user = sample_User
-    user["sessions"].append(sample_valid_Session)
-    user.save()
     agent = sample_Agent
     agent.save()
     library = sample_Library
@@ -159,7 +117,8 @@ def testMissingFieldsAssignJob(client, sample_Job, sample_Library, sample_Agent,
     library.save()
     # send job to api
     response = client.post("/agent/jobs",
-                           headers={"Content-Type": "application/json"},
+                           headers={"Content-Type": "application/json",
+                                    "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({}))
     assert response.status_code == 400
-    assert response.json["error"] == "request is missing the following parameters: headers=['Auth-Token', 'Username'], data=['agentID', 'filename', 'argv']"
+    assert response.json["error"] == "request is missing the following parameters: data=['agentID', 'filename', 'argv']"
