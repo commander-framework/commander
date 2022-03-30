@@ -549,29 +549,16 @@ def missing(request, headers=None, data=None):
 
 def missingJobForm(request, headers=None, data=None):
     """ Return error message about missing paramaters if there are any """
-    missingHeaders = []
     missingData = []
-    if headers:
-        for header in headers:
-            if header not in request.headers:
-                missingHeaders.append(header)
     if data:
         for field in data:
             if field not in request.form and field not in request.files:
                 missingData.append(field)
-    if not missingHeaders and not missingData:
+    if not missingData:
         return None
-    errMsg = "request is missing the following parameters: "
-    if missingHeaders:
-        errMsg += "headers=['"
-        errMsg += "', '".join(missingHeaders)
-        errMsg += "']"
-    if missingHeaders and missingData:
-        errMsg += ", "
-    if missingData:
-        errMsg += "data=['"
-        errMsg += "', '".join(missingData)
-        errMsg += "']"
+    errMsg = "request is missing the following parameters: data=['"
+    errMsg += "', '".join(missingData)
+    errMsg += "']"
     return errMsg
 
 
