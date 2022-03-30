@@ -11,6 +11,6 @@ class Config(object):
     JWT_SECRET_KEY = os.environ.get("SECRET_KEY") or "super-secret-default-key"
     SECRET_KEY = os.environ.get("SECRET_KEY") or "super-secret-default-key"
     SOCK_SERVER_OPTIONS = {"ping_interval": 25}
-    UPLOADS_DIR = os.environ.get("UPLOADS_DIR") or "/opt/commander/library/"
+    UPLOADS_DIR = os.environ.get("UPLOADS_DIR") or "/opt/commander/library"
     if UPLOADS_DIR[-1] != "/" and UPLOADS_DIR[-1] != "\\":
         UPLOADS_DIR += os.path.sep
