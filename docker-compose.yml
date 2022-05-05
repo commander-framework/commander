@@ -11,6 +11,14 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+  cache:
+    image: redis:6.2-alpine
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS}
+    volumes:
+      - ./volumes/cache:/data
+    networks:
+      - backend
+    restart: always
   capy:
     container_name: "capy"
     build:
@@ -38,13 +46,15 @@ services:
         DB_USER: ${DB_USER}
         DB_PASS: ${DB_PASS}
         LOG_LEVEL: ${LOG_LEVEL}
+        REDIS_PASS: ${REDIS_PASS}
         SECRET_KEY: ${SECRET_KEY}
         UPLOADS_DIR: "/opt/commander/library/"
         WORKERS: ${WORKERS}
         WORKER_CONNECTIONS: ${WORKER_CONNECTIONS}
     depends_on:
-      - mongo
+      - cache
       - capy
+      - mongo
     volumes:
       - ./volumes/commander/library:/opt/commander/library
     networks:
