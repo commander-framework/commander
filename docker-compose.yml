@@ -13,9 +13,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
   cache:
     image: redis:6.2-alpine
-    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS}
-    volumes:
-      - ./volumes/cache:/data
+    container_name: "cache"
+    command: redis-server --save 20 1 --loglevel notice --requirepass "${REDIS_PASS}"
     networks:
       - backend
     restart: always
