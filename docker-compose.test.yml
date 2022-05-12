@@ -1,0 +1,95 @@
+version: "3.9"
+services:
+  sut:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      - capy
+      - nginx
+    volumes:
+      - ./volumes/capy:/app/ca:ro
+    networks:
+      - frontend
+  mongo:
+    container_name: "mongo"
+    image: "mongo:5"
+    volumes:
+      - ./volumes/mongo:/data/db
+    networks:
+      - backend
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+  cache:
+    image: redis:6.2-alpine
+    container_name: "cache"
+    command: redis-server --save 20 1 --loglevel notice --requirepass "${REDIS_PASS}"
+    networks:
+      - backend
+    restart: always
+  capy:
+    container_name: "capy"
+    build:
+      context: ./CAPy
+      target: runner-image
+      args:
+        SECRET_KEY: ${SECRET_KEY}
+        CA_NAME: "Commander CA"
+        CA_CERT_DIR: "/opt/CAPy/CA"
+        PROXY_DOMAIN: ${PROXY_DOMAIN}
+    volumes:
+      - ./volumes/capy:/opt/CAPy/CA
+    networks:
+      - backend
+    restart: always
+  commander:
+    container_name: "commander"
+    build:
+      context: ./Commander
+      target: runner-image
+      args:
+        APP_NAME: ${APP_NAME}
+        CA_HOSTNAME: "capy"
+        DB_URI: mongodb://mongo
+        DB_USER: ${DB_USER}
+        DB_PASS: ${DB_PASS}
+        LOG_LEVEL: ${LOG_LEVEL}
+        REDIS_PASS: ${REDIS_PASS}
+        SECRET_KEY: ${SECRET_KEY}
+        UPLOADS_DIR: "/opt/commander/library/"
+        WORKERS: ${WORKERS}
+        WORKER_CONNECTIONS: ${WORKER_CONNECTIONS}
+    depends_on:
+      - cache
+      - capy
+      - mongo
+    volumes:
+      - ./volumes/commander/library:/opt/commander/library
+    networks:
+      - application
+      - backend
+    restart: always
+  nginx:
+    container_name: "nginx"
+    build:
+      context: ./Nginx
+      args:
+        PROXY_DOMAIN: ${PROXY_DOMAIN}
+    depends_on:
+      - commander
+      - capy
+    volumes:
+      - ./volumes/capy:/opt/CA:ro
+    networks:
+      - frontend
+      - application
+    ports:
+      - "443:443"
+    restart: always
+
+networks:
+  frontend:
+  application:
+  backend:
