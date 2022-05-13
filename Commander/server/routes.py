@@ -147,20 +147,21 @@ def agentCheckin(ws):
     while True:
         # TODO: check if the socket is closed by the agent and edit the agent's lastOnline and active fields
         # check db for jobs
-        job = jobsCache.agentCheckin(agent["agentID"], "foo_group")  # TODO: implement agent groups
-        if not job:
+        jobs = jobsCache.agentCheckin(agent["agentID"], "foo_group")  # TODO: implement agent groups
+        if not jobs:
             sleep(1)
             continue
-        # send most recent job to agent
-        log.info(f"<{request.remote_addr}> sending job '{job['filename']}' to agent")
-        ws.send(json.dumps({"job": job.to_json()}))
+        # send jobs to agent
+        log.info(f"<{request.remote_addr}> sending jobs to agent {agent['agentID']} {agent['hostname']}")
+        ws.send(json.dumps({"jobs": json.dumps(jobs)}))
         # wait for acknowledgement from agent before marking job as running
         ack = ws.receive()
         if ack != "ack":
             continue
-        # mark job as received by the agent
-        log.info(f"<{request.remote_addr}> marking job '{job['filename']}' as received by agent")
-        jobsCache.markSent(agent["agentID"])
+        # mark jobs as received by the agent
+        log.info(f"<{request.remote_addr}> marking jobs as received by agent")
+        jobIDs = [job["jobID"] for job in jobs]
+        jobsCache.markSent(agent["agentID"], jobIDs)
         # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
         try:
             return ws.isMockServer

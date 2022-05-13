@@ -33,6 +33,8 @@ ARG DB_URI="mongomock://localhost/"
 ARG DB_USER=""
 ARG DB_PASS=""
 ARG LOG_LEVEL="4"
+ARG REDIS_PASS=""
+ARG REDIS_URI="redis://localhost:6379"
 ARG SECRET_KEY="super-secret-default-key"
 ARG UPLOADS_DIR="/opt/${APP_NAME}/library/"
 # specify WORKERS to match the number of CPU cores allocated to your container
@@ -47,6 +49,8 @@ ENV DB_URI=$DB_URI
 ENV DB_USER=$DB_USER
 ENV DB_PASS=$DB_PASS
 ENV LOG_LEVEL=$LOG_LEVEL
+ENV REDIS_PASS=$REDIS_PASS
+ENV REDIS_URI=$REDIS_URI
 ENV SECRET_KEY=$SECRET_KEY
 ENV UPLOADS_DIR=$UPLOADS_DIR
 ENV WORKERS=$WORKERS
