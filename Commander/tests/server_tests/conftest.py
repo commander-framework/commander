@@ -1,3 +1,6 @@
+from pytest_redis import factories
+redisServer = factories.redis_proc(port=6379)
+
 import bcrypt
 import os
 import pytest
