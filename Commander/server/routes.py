@@ -147,7 +147,7 @@ def agentCheckin(ws):
     while True:
         # TODO: check if the socket is closed by the agent and edit the agent's lastOnline and active fields
         # check db for jobs
-        jobs = jobsCache.agentCheckin(agent["agentID"], "foo_group")  # TODO: implement agent groups
+        jobs = jobsCache.agentCheckin(agent["agentID"])  # TODO: implement agent groups
         if not jobs:
             sleep(1)
             continue
@@ -188,6 +188,7 @@ def assignJob():
         return {"error": "the library contains no executable with the given filename"}, 400
     job = jobsQuery[0]
     argv = request.json["argv"]   # TODO: error handling (should be list of strings)
+    job["jobID"] = str(uuid4())
     job["user"] = get_jwt_identity()
     job["argv"] = argv
     job["timeCreated"] = utcNowTimestamp()

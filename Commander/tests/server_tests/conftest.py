@@ -1,6 +1,3 @@
-from pytest_redis import factories
-redisServer = factories.redis_proc(port=6379)
-
 import bcrypt
 import os
 import pytest
@@ -46,7 +43,8 @@ def sample_JobFile():
 
 @pytest.fixture
 def sample_Job():
-    job = Job(executor="psh",
+    job = Job(jobID=str(uuid4()),
+              executor="psh",
               filename="testfile",
               description="Test job description. This job is not real.",
               os="windows",

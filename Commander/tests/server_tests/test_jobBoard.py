@@ -1,4 +1,6 @@
+import json
 from multiprocessing import Process
+import time
 
 def test_assignJob(jobBoard, sample_Job, sample_Agent):
     # prepare mongomock with relevant sample documents
@@ -8,7 +10,7 @@ def test_assignJob(jobBoard, sample_Job, sample_Agent):
     jobsCache = jobBoard
     jobsCache.assignJob(sample_Job, agentID=agent["agentID"])
     agent.reload()
-    assert sample_Job in jobsCache.jobAssignments["agents"][agent["agentID"]]
+    assert json.loads(sample_Job.to_json()) in jobsCache.agentCheckin(agent["agentID"])
     assert sample_Job in agent["jobsQueue"]
 
 
@@ -38,8 +40,9 @@ def test_noIdAssignJob(jobBoard, sample_Job):
 #     p2.join()
 #     p3.join()
 #     p4.join()
+#     time.sleep(3)
 #     agent.reload()
-#     assert sample_Job in jobsCache.jobAssignments["agents"][agent["agentID"]]
-#     assert len(jobsCache.jobAssignments["agents"][agent["agentID"]]) == 4
+#     assert json.loads(sample_Job.to_json()) in jobsCache.agentCheckin(agent["agentID"])
+#     assert len(jobsCache.agentCheckin(agent["agentID"])) == 4
 #     assert sample_Job in agent["jobsQueue"]
 #     assert len(agent["jobsQueue"]) == 4

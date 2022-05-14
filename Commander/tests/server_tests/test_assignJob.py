@@ -36,8 +36,8 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
-                                 "filename": sample_Job["filename"],
-                                 "argv": []}))
+                                            "filename": sample_Job["filename"],
+                                            "argv": []}))
     assert response.status_code == 200
     assert response.json["success"] == "job successfully submitted -- waiting for agent to check in"
     # check in and make sure job is in agent's queue now
@@ -68,8 +68,8 @@ def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_JWT):
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
-                                 "filename": sample_Job["filename"],
-                                 "argv": []}))
+                                            "filename": sample_Job["filename"],
+                                            "argv": []}))
     assert response.status_code == 400
     assert response.json["error"] == "there are no jobs in the library yet"
 
@@ -86,8 +86,8 @@ def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
-                                 "filename": sample_Job["filename"],
-                                 "argv": []}))
+                                            "filename": sample_Job["filename"],
+                                            "argv": []}))
     assert response.status_code == 400
     assert response.json["error"] == "the library contains no executable with the given filename"
 
@@ -102,8 +102,8 @@ def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
-                                 "filename": sample_Job["filename"],
-                                 "argv": []}))
+                                            "filename": sample_Job["filename"],
+                                            "argv": []}))
     assert response.status_code == 400
     assert response.json["error"] == "no hosts found matching the agentID in the request"
 

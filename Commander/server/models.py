@@ -3,6 +3,7 @@ from mongoengine import Document, EmbeddedDocument, IntField, StringField, \
 
 
 class Job(EmbeddedDocument):
+    jobID = StringField()
     executor = StringField(required=True)
     filename = StringField(required=True)
     description = StringField(required=True)
