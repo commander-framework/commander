@@ -161,7 +161,7 @@ def agentCheckin(ws):
         # mark jobs as received by the agent
         log.info(f"<{request.remote_addr}> marking jobs as received by agent")
         jobIDs = [job["jobID"] for job in jobs]
-        jobsCache.markSent(agent["agentID"], jobIDs)
+        jobsCache.markSent(jobIDs, agent["agentID"])
         # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
         try:
             return ws.isMockServer
@@ -195,7 +195,7 @@ def assignJob():
     # add job to the agent's queue
     try:
         jobsCache.assignJob(job, agentID=request.json["agentID"])
-    except ValueError as e:
+    except (ValueError, TimeoutError) as e:
         log.warning(f"failed to assign job to agent: {e}")
         return {"error": str(e)}, 400
     log.info(f"<{request.remote_addr}> {get_jwt_identity()} assigned job '{job['filename']}' to agent {request.json['agentID']}")
