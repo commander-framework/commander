@@ -10,18 +10,19 @@ class Cache:
     def __init__(self):
         self.cache = redis.from_url(Config.REDIS_URI)
 
-    def assignJobToAgents(self, job, agentIDs):
+    def assignJobToAgents(self, job, agentKeys):
         """ Assign a job to one or more agents in the Redis cache. """
         with self.cache.pipeline() as pipe:
-            jobs = self.cache.mget(agentIDs)
-            for agentID, agentJobs in zip(agentIDs, jobs):
+            jobs = self.cache.mget(agentKeys)
+            for agentKey, agentJobs in zip(agentKeys, jobs):
                 if not agentJobs or agentJobs == b'null':
-                    pipe.set(f"agent:{agentID}", f"[{job.to_json()}]")
-                    log.debug(f"Added job '{job.filename}' to empty job queue for agent {agentID}")
+                    pipe.set(agentKey, f"[{job.to_json()}]")
+                    log.debug(f"Added job '{job.filename}' to empty job queue for {agentKey}")
                 else:
-                    updatedJobs = json.loads(agentJobs).append(json.loads(job.to_json()))
-                    pipe.set(f"agent:{agentID}", json.dumps(updatedJobs))
-                    log.debug(f"Added job '{job.filename}' to existing job queue for agent {agentID}")
+                    updatedJobs = json.loads(agentJobs)
+                    updatedJobs.append(json.loads(job.to_json()))
+                    pipe.set(agentKey, json.dumps(updatedJobs))
+                    log.debug(f"Added job '{job.filename}' to existing job queue for {agentKey}")
             pipe.execute()
 
     def removeJobsFromAgent(self, jobIDs, agentID):
@@ -42,19 +43,16 @@ class Cache:
             waitCount = 0
             while True:
                 try:
-                    pipe.watch("lock:assignJob")
-                    lock = self.cache.get("lock:assignJob")
+                    pipe.watch(f"lock:{lockID}")
+                    lock = self.cache.get(f"lock:{lockID}")
                     if not lock:
-                        pipe.set(f"lock:{lockID}", f"1")
+                        pipe.multi()
+                        pipe.set(f"lock:{lockID}", "1")
+                        pipe.execute()
                         break
                     waitCount += 1
-                    if waitCount == 5:
-                        log.info(f"Waiting {waitCount} times to aquire cache lock '{lockID}'")
-                    elif waitCount == 10:
-                        log.warning(f"Waiting {waitCount} times to aquire cache lock '{lockID}'")
-                    elif waitCount == 20:
+                    if waitCount == 10:
                         log.error(f"ERROR: cache lock '{lockID}' appears to be stuck")
-                        print(f"ERROR: cache lock '{lockID}' appears to be stuck")
                         raise TimeoutError("could not acquire cache lock")
                 except redis.WatchError:
                     errorCount += 1
@@ -83,17 +81,17 @@ class JobBoard:
                 raise ValueError("no hosts found matching the agentID in the request")
             agent.jobsQueue.append(job)
             agent.save()
-            agentIDs = [agentID]
+            agentKeys = [f"agent:{agentID}"]
         elif groupID:
             # update DB first and make sure group exists
             agents = Agent.objects(groups__icontains=groupID)
             if not agents.first():
                 raise ValueError("no hosts found matching the groupID in the request")
             agents.update(push__jobsQueue=job)
-            agentIDs = [agent.agentID for agent in agents]
+            agentKeys = [f"agent:{agent.agentID}" for agent in agents]
         # add job to each agent in cache
         jobsCache.acquireLock("assignJob")
-        jobsCache.assignJobToAgents(job, agentIDs)
+        jobsCache.assignJobToAgents(job, agentKeys)
         jobsCache.releaseLock("assignJob")
 
     def agentCheckin(self, agentID):
