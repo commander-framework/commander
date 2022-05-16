@@ -1,5 +1,6 @@
 import json
-from server import app
+from server import app, log
+from simple_websocket import ConnectionClosed
 from werkzeug.exceptions import InternalServerError, NotFound
 
 
@@ -26,8 +27,9 @@ def handle_500(error):
         "code": error.code,
         "name": error.name,
         "description": error.description})
+    log.error(response.data)
     response.content_type = "application/json"
-    return response
+    return response, 500
 
 
 @app.errorhandler(NotFound)
@@ -39,4 +41,10 @@ def handle_404(error):
         "name": error.name,
         "description": error.description})
     response.content_type = "application/json"
-    return response
+    return response, 404
+
+@app.errorhandler(ConnectionClosed)
+def handle_connection_closed(error):
+    """ Log unexpected websocket connection closed errors. """
+    log.error(error)
+    return "", 205
