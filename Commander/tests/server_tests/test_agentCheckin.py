@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from server import jobsCache
 from server.routes import agentCheckin
@@ -54,6 +55,8 @@ def testAvailableJobCheckin(sample_Agent, sample_Job):
     dispatchTimestamp = job["timeDispatched"]
     dispatchTime = timestampToDatetime(dispatchTimestamp)
     assert dispatchTime >= createdTime
+    # make sure lastCheckin was created
+    assert timestampToDatetime(agent["lastCheckin"]) <= datetime.utcnow()
 
 
 def testBadRequestCheckin(sample_Agent):

@@ -9,6 +9,7 @@ from mongoengine import DoesNotExist
 from os import path, remove
 import requests
 from server import app, jobsCache, log, sock
+from simple_websocket import ConnectionClosed, ConnectionError
 import shutil
 from time import sleep
 from types import SimpleNamespace
@@ -142,26 +143,33 @@ def agentCheckin(ws):
         return {"error": "agent ID not found, please check ID or register"}
     # monitor for jobs to send to the agent
     agent = agentQuery[0]
+    log.debug(f"<{ws.sock.getpeername()[0]}> agent {agent['agentID']} ({agent['hostname']}) listening for jobs")
     while True:
-        # TODO: check if the socket is closed by the agent and edit the agent's lastOnline and active fields
-        # check db for jobs
-        jobs = jobsCache.agentCheckin(agent["agentID"])  # TODO: implement agent groups
-        if not jobs:
-            sleep(1)
-            continue
-        # send jobs to agent
-        log.info(f"<{request.remote_addr}> sending jobs to agent {agent['agentID']} {agent['hostname']}")
-        ws.send(json.dumps({"jobs": json.dumps(jobs)}))
-        # wait for acknowledgement from agent before marking job as running
-        ack = ws.receive()
-        if ack != "ack":
-            continue
-        # mark jobs as received by the agent
-        log.info(f"<{request.remote_addr}> marking jobs as received by agent")
-        jobIDs = [job["jobID"] for job in jobs]
-        jobsCache.markSent(jobIDs, agent["agentID"])
-        # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
-        if "isMockServer" in ws.__dict__:
+        try:
+            # check db for jobs
+            jobs = jobsCache.agentCheckin(agent["agentID"])  # TODO: implement agent groups
+            if not jobs:
+                sleep(1)
+                continue
+            # send jobs to agent
+            log.info(f"<{ws.sock.getpeername()[0]}> sending jobs to agent {agent['agentID']} ({agent['hostname']})")
+            ws.send(json.dumps({"jobs": json.dumps(jobs)}))
+            # wait for acknowledgement from agent before marking job as running
+            ack = ws.receive()
+            if ack != "ack":
+                continue
+            # mark jobs as received by the agent
+            log.info(f"<{ws.sock.getpeername()[0]}> marking jobs as received by agent {agent['agentID']} ({agent['hostname']})")
+            jobIDs = [job["jobID"] for job in jobs]
+            jobsCache.markSent(jobIDs, agent["agentID"])
+            # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
+            if "isMockServer" in ws.__dict__:
+                raise ConnectionClosed(1006, "mock server")
+        except (ConnectionClosed, ConnectionError):
+            # connection lost; update lastCheckin and close the socket
+            log.debug(f"<{ws.sock.getpeername()[0]}> agent {agent['agentID']} ({agent['hostname']}) connection closed")
+            agent.update(lastCheckin=utcNowTimestamp())
+            agent.save()
             break
 
 
