@@ -46,6 +46,7 @@ services:
         DB_PASS: ${DB_PASS}
         LOG_LEVEL: ${LOG_LEVEL}
         REDIS_PASS: ${REDIS_PASS}
+        REDIS_URI: redis://cache:6379
         SECRET_KEY: ${SECRET_KEY}
         UPLOADS_DIR: "/opt/commander/library/"
         WORKERS: ${WORKERS}

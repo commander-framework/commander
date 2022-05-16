@@ -2,7 +2,6 @@ import bcrypt
 import os
 import pytest
 from server import app, agentDB, adminDB
-from server.jobBoard import JobBoard
 from server.models import Job, Library, Agent, RegistrationKey, User
 import tempfile
 from utils import utcNowTimestamp
@@ -26,12 +25,6 @@ def client():
 
 
 @pytest.fixture
-def jobBoard():
-    jobsCache = JobBoard()
-    return jobsCache
-
-
-@pytest.fixture
 def sample_JobFile():
     tempdir = tempfile.gettempdir() + os.path.sep
     with open(tempdir + "testfile", "wb") as f:
@@ -43,7 +36,8 @@ def sample_JobFile():
 
 @pytest.fixture
 def sample_Job():
-    job = Job(executor="psh",
+    job = Job(jobID=str(uuid4()),
+              executor="psh",
               filename="testfile",
               description="Test job description. This job is not real.",
               os="windows",

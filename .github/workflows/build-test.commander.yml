@@ -12,10 +12,19 @@ env:
   IMAGE_NAME: commander
 
 jobs:
-  # Run tests.
-  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
   test:
     runs-on: ubuntu-latest
+    container: python:3.9
+
+    services:
+      redis:
+        image: redis:6.2-alpine
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Check out repository
@@ -24,7 +33,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.x"
+          python-version: "3.9"
       
       - name: Install dependencies
         working-directory: ./Commander
@@ -33,6 +42,8 @@ jobs:
       - name: Run tests
         working-directory: ./Commander
         run: pytest --cov --cov-report=xml
+        env:
+          REDIS_URI: redis://redis:6379
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2

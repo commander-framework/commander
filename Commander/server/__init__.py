@@ -2,7 +2,6 @@ from config import Config
 from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_sock import Sock
-from .jobBoard import JobBoard
 import logging
 from mongoengine import connect
 
@@ -36,6 +35,7 @@ adminDB = connect(db="admins",
                   host=Config.DB_URI)
 
 # initialize jobBoard cache
+from .jobBoard import JobBoard
 jobsCache = JobBoard()
 
 from . import errors

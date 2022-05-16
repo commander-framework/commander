@@ -4,8 +4,11 @@ Flask-JWT-Extended==4.3.1
 flask-sock==0.5.2
 gevent==21.8.0
 gunicorn==20.1.0
+hiredis==2.0.0
 mongoengine==0.23.1
 mongomock==3.23.0
 pytest==6.2.5
 pytest-cov==3.0.0
+pytest-redis==2.4.0
+redis==4.3.1
 requests==2.23.0
