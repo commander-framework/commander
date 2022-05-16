@@ -161,10 +161,8 @@ def agentCheckin(ws):
         jobIDs = [job["jobID"] for job in jobs]
         jobsCache.markSent(jobIDs, agent["agentID"])
         # stop checking for jobs if we are testing this function, otherwise continue watching for jobs
-        try:
-            return ws.isMockServer
-        except AttributeError:
-            pass
+        if "isMockServer" in ws.__dict__:
+            break
 
 
 @app.post("/agent/jobs")
