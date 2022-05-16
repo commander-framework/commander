@@ -118,30 +118,28 @@ def agentCheckin(ws):
     """ Agent checking in -- send file to be executed if a job is waiting """
     log.debug(f"<{ws.sock.getpeername()[0]}> agent checking in")
     # get agent ID from socket
-    while True:
-        data = ws.receive()
-        # validate that json data was sent
-        try:
-            jsonData = json.loads(data)
-        except Exception:
-            log.warning(f"[{ws.sock.getpeername()[0]}] invalid json data received from agent during checkin")
-            ws.close(400, json.dumps({"error": "message was not a valid json object"}))
-            return {"error": "message was not a valid json object"}
-        # convert data to request-like object for missing()
-        request = SimpleNamespace(**{"headers": jsonData,
-                                     "remote_addr": ws.sock.getpeername()[0]})
-        # check if the Agent ID was provided in the json data
-        if missingParams := missing(request, headers=["Agent-ID"]):
-            log.warning(f"<{request.remote_addr}> {missingParams}")
-            ws.close(400, json.dumps({"error": missingParams}))
-            return {"error": missingParams}
-        # make sure Agent ID exists in the DB
-        agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
-        if not agentQuery:
-            log.warning(f"<{request.remote_addr}> agentID not found in database")
-            ws.close(400, json.dumps({"error": "agent ID not found, please check ID or register"}))
-            return {"error": "agent ID not found, please check ID or register"}
-        break
+    data = ws.receive()
+    # validate that json data was sent
+    try:
+        jsonData = json.loads(data)
+    except Exception:
+        log.warning(f"[{ws.sock.getpeername()[0]}] invalid json data received from agent during checkin")
+        ws.close(400, json.dumps({"error": "message was not a valid json object"}))
+        return {"error": "message was not a valid json object"}
+    # convert data to request-like object for missing()
+    request = SimpleNamespace(**{"headers": jsonData,
+                                    "remote_addr": ws.sock.getpeername()[0]})
+    # check if the Agent ID was provided in the json data
+    if missingParams := missing(request, headers=["Agent-ID"]):
+        log.warning(f"<{request.remote_addr}> {missingParams}")
+        ws.close(400, json.dumps({"error": missingParams}))
+        return {"error": missingParams}
+    # make sure Agent ID exists in the DB
+    agentQuery = Agent.objects(agentID__exact=request.headers["Agent-ID"])
+    if not agentQuery:
+        log.warning(f"<{request.remote_addr}> agentID not found in database")
+        ws.close(400, json.dumps({"error": "agent ID not found, please check ID or register"}))
+        return {"error": "agent ID not found, please check ID or register"}
     # monitor for jobs to send to the agent
     agent = agentQuery[0]
     while True:
