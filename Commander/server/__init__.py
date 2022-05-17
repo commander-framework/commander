@@ -3,7 +3,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_sock import Sock
 import logging
-from models import User
+from .models import User
 from mongoengine import connect
 
 # initialize app
