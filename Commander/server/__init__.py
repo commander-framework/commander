@@ -38,10 +38,10 @@ adminDB = connect(db="admins",
 # create first admin if it doesn't already exist
 adminQuery = User.objects(username="admin")
 if not adminQuery:
-    admin = User(username="admin",
-                 name="Default Admin",
-                 passwordHash=Config.ADMIN_HASH)
-    admin.save()
+    defaultAdmin = User(username="admin",
+                   name="Default Admin",
+                   passwordHash=Config.ADMIN_HASH)
+    defaultAdmin.save()
     log.info("Created admin user")
 
 # initialize jobBoard cache
