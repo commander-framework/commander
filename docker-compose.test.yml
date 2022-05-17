@@ -14,8 +14,8 @@ services:
   mongo:
     container_name: "mongo"
     image: "mongo:5"
-    volumes:
-      - ./volumes/mongo:/data/db
+    # volumes:
+    #   - ./volumes/mongo:/data/db
     networks:
       - backend
     restart: always
