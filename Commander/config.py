@@ -2,6 +2,7 @@ import os
 
 
 class Config(object):
+    ADMIN_HASH = os.environ.get("ADMIN_HASH") or None
     APP_NAME = os.environ.get("APP_NAME") or "Commander"
     CA_HOSTNAME = os.environ.get("CA_HOSTNAME") or "CAPy.local"
     DB_USER = os.environ.get("DB_USER") or None

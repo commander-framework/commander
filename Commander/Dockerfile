@@ -27,6 +27,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 FROM ubuntu:20.04 AS runner-image
 
 # DEFAULT ARGS that can be changed
+ARG ADMIN_HASH=""
 ARG APP_NAME="Commander"
 ARG CA_HOSTNAME="CAPy.local"
 ARG DB_URI="mongomock://localhost/"
@@ -43,6 +44,7 @@ ARG WORKERS="2"
 ARG WORKER_CONNECTIONS="1000"
 
 # set environment variables
+ENV ADMIN_HASH=$ADMIN_HASH
 ENV APP_NAME=$APP_NAME
 ENV CA_HOSTNAME=$CA_HOSTNAME
 ENV DB_URI=$DB_URI

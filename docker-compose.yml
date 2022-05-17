@@ -39,6 +39,7 @@ services:
       context: ./Commander
       target: runner-image
       args:
+        ADMIN_HASH: ${ADMIN_HASH}
         APP_NAME: ${APP_NAME}
         CA_HOSTNAME: "capy"
         DB_URI: mongodb://mongo
