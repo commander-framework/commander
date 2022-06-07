@@ -20,6 +20,22 @@ def registrationKey(adminJWT):
     yield registrationKey
 
 
+@pytest.fixture(scope="session")
+def agentID(caPath, cert, registrationKey):
+    url = "https://localhost/agent/register"
+    headers = {"Content-Type": "application/json"}
+    data = {"registrationKey:": registrationKey,
+            "hostname": "test-hostname",
+            "os": "Linux"}
+    response = requests.post(url,
+                             headers=headers,
+                             data=data,
+                             verify=caPath,
+                             cert=cert)
+    agentID = response.json()["agentID"]
+    yield agentID
+
+
 @pytest.fixture()
 def cert():
     certPath = "/app/ca/certs/proxy/proxy.crt"

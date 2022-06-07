@@ -1,4 +1,29 @@
+import pytest
 import requests
+
+"""
+Ensure that all of our fixtures that we use in integration tests are set up correctly.
+"""
+
+@pytest.mark.order(0)
+def test_authentication(adminJWT):
+    url = "https://localhost/admin/authenticate"
+    headers = {"Content-Type": "application/json",
+               "Authorization": f"Bearer {adminJWT}"}
+    response = requests.post(url,
+                             headers=headers)
+    assert response.status_code == 200
+    assert response.json()["success"] == "successfully created new admin account"
+
+
+@pytest.mark.order(1)
+def test_registrationKey(registrationKey):
+    assert len(registrationKey) == 36
+
+
+@pytest.mark.order(2)
+def test_agentRegistration(agentID):
+    assert len(agentID) == 36
 
 
 def test_adminCreation(adminJWT):
@@ -13,18 +38,3 @@ def test_adminCreation(adminJWT):
                              data=data)
     assert response.status_code == 200
     assert response.json()["success"] == "successfully created new admin account"
-
-
-def test_agentRegistration(cert, caPath, registrationKey):
-    url = "https://localhost/agent/register"
-    headers = {"Content-Type": "application/json"}
-    data = {"registrationKey:": registrationKey,
-            "hostname": "test-hostname",
-            "os": "Linux"}
-    response = requests.post(url,
-                             headers=headers,
-                             data=data,
-                             verify=caPath,
-                             cert=cert)
-    assert response.status_code == 200
-    assert len(response.json()["agentID"]) == 36
