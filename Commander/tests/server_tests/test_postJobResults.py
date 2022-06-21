@@ -24,7 +24,7 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     assert response.status_code == 200
     assert response.json["success"] == "successfully saved job response"
     # get finished jobs for the sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))

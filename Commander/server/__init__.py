@@ -48,5 +48,5 @@ if not adminQuery:
 from .jobBoard import JobBoard
 jobsCache = JobBoard()
 
-from . import errors
-from . import routes
+from server import errors
+from server.routes import admin, agent

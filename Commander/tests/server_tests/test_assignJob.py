@@ -1,5 +1,5 @@
 import json
-from server.routes import agentCheckin
+from server.routes.agent import agentCheckin
 from utils import timestampToDatetime
 
 
@@ -32,7 +32,7 @@ def testAssignJob(client, sample_Job, sample_Library, sample_Agent, sample_valid
     library["jobs"].append(sample_Job)
     library.save()
     # send job to api
-    response = client.post("/agent/jobs",
+    response = client.post("/admin/jobs",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
@@ -64,7 +64,7 @@ def testNoLibraryAssignJob(client, sample_Job, sample_Agent, sample_valid_JWT):
     agent.save()
     # intentionally not creating a library document in the database
     # send job to api
-    response = client.post("/agent/jobs",
+    response = client.post("/admin/jobs",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
@@ -82,7 +82,7 @@ def testJobMissingAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
     # intentionally not adding sample_Job to the library
     library.save()
     # send job to api
-    response = client.post("/agent/jobs",
+    response = client.post("/admin/jobs",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
@@ -98,7 +98,7 @@ def testBadAgentIDAssignJob(client, sample_Job, sample_Library, sample_Agent, sa
     library["jobs"].append(sample_Job)
     library.save()
     # send job to api
-    response = client.post("/agent/jobs",
+    response = client.post("/admin/jobs",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"],
@@ -116,7 +116,7 @@ def testMissingFieldsAssignJob(client, sample_Job, sample_Library, sample_Agent,
     library["jobs"].append(sample_Job)
     library.save()
     # send job to api
-    response = client.post("/agent/jobs",
+    response = client.post("/admin/jobs",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({}))

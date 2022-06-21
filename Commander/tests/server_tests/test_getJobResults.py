@@ -17,7 +17,7 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     agent["jobsHistory"].append(job)
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
@@ -50,7 +50,7 @@ def testNoJobsGetResults(client, sample_Agent, sample_valid_JWT):
     # intentionally not adding job to agent history
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
@@ -73,7 +73,7 @@ def testUnknownAgentGetResults(client, sample_Job, sample_Agent, sample_valid_JW
     agent["jobsHistory"].append(job)
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": "not_an_agent"}))
@@ -95,7 +95,7 @@ def testMissingFieldsGetResults(client, sample_Job, sample_Agent, sample_valid_J
     agent["jobsHistory"].append(job)
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({}))
