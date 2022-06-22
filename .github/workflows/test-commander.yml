@@ -1,0 +1,96 @@
+name: "Commander Tests/Build"
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: commander
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    container: python:3.9
+    services:
+      redis:
+        image: redis:6.2-alpine
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      
+      - name: Install dependencies
+        working-directory: ./Commander
+        run: python -m pip install -r requirements.txt
+
+      - name: Run tests
+        working-directory: ./Commander
+        run: pytest --cov --cov-report=xml
+        env:
+          REDIS_URI: redis://redis:6379
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./Commander/coverage.xml
+
+  integration-test:
+    runs-on: ubununtu-latest
+    needs: unit-test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Build containers
+        run: docker-compose build
+
+      - name: Deploy service
+        run: docker-compose -f docker-compose.test.yml up -d
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml exec -T sut pytest
+
+  # build:
+  #   runs-on: ubuntu-latest
+  #   needs: integration-test
+
+  #   steps:
+  #     - name: Check out repository
+  #       uses: actions/checkout@v2
+
+  #     - name: Log in to the Container registry
+  #       uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Extract metadata (tags, labels) for Docker
+  #       id: meta
+  #       uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+  #       with:
+  #         images: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}
+
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+  #       with:
+  #         context: ./Commander
+  #         push: ${{ github.event_name != 'pull_request' }}
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         labels: ${{ steps.meta.outputs.labels }}
