@@ -1,3 +1,4 @@
+import os
 import pytest
 import requests
 
@@ -5,9 +6,11 @@ import requests
 Ensure that all of our fixtures that we use in integration tests are set up correctly.
 """
 
+API_HOST = os.environ.get("API_HOST", "nginx")
+
 @pytest.mark.order(0)
 def test_authentication(adminJWT):
-    url = "https://localhost/admin/authenticate"
+    url = f"https://{API_HOST}/admin/authenticate"
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {adminJWT}"}
     response = requests.post(url,
@@ -28,7 +31,7 @@ def test_agentRegistration(agentID):
 
 @pytest.mark.order(3)
 def test_adminCreation(adminJWT):
-    url = "https://localhost/admin/account"
+    url = "https://{API_HOST}/admin/account"
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {adminJWT}"}
     data = {"username": "test",

@@ -1,10 +1,14 @@
+import os
 import pytest
 import requests
 
 
+API_HOST = os.environ.get("API_HOST", "nginx")
+
+
 @pytest.fixture(scope="session")
 def adminJWT():
-    response = requests.post("https://localhost/admin/login",
+    response = requests.post("https://{API_HOST}/admin/login",
                              headers={"Content-Type": "application/json"},
                              data={"username": "admin", "password": "Th1s_i$_@_t3sT_p@$$w0rd"})
     token = response.json()["token"]
@@ -13,7 +17,7 @@ def adminJWT():
 
 @pytest.fixture(scope="session")
 def registrationKey(adminJWT):
-    response = requests.get("https://localhost/admin/registration-key",
+    response = requests.get("https://{API_HOST}/admin/registration-key",
                             headers={"Content-Type": "application/json",
                                      "Authorization": f"Bearer {adminJWT}"})
     registrationKey = response.json()["registrationKey"]
@@ -22,7 +26,7 @@ def registrationKey(adminJWT):
 
 @pytest.fixture(scope="session")
 def agentID(caPath, cert, registrationKey):
-    url = "https://localhost/agent/register"
+    url = "https://{API_HOST}/agent/register"
     headers = {"Content-Type": "application/json"}
     data = {"registrationKey:": registrationKey,
             "hostname": "test-hostname",

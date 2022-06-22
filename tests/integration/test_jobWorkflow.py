@@ -1,4 +1,8 @@
+import os
 import pytest
+
+
+API_HOST = os.environ.get("API_HOST", "nginx")
 
 
 @pytest.mark.order(4)
