@@ -28,11 +28,13 @@ agentDB = connect(db="agents",
                   alias="agent_db",
                   username=Config.DB_USER,
                   password=Config.DB_PASS,
+                  authentication_source="admin",
                   host=Config.DB_URI)
 adminDB = connect(db="admins",
                   alias="admin_db",
                   username=Config.DB_USER,
                   password=Config.DB_PASS,
+                  authentication_source="admin",
                   host=Config.DB_URI)
 
 # create first admin if it doesn't already exist
