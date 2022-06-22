@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   sut:
+    container_name: "sut"
     build:
       context: ./tests
       dockerfile: Dockerfile.test
