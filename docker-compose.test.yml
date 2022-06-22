@@ -2,7 +2,7 @@ version: "3.9"
 services:
   sut:
     build:
-      context: ./Test
+      context: ./tests
       dockerfile: Dockerfile.test
     depends_on:
       - capy
@@ -67,8 +67,8 @@ services:
       - cache
       - capy
       - mongo
-    volumes:
-      - ./volumes/commander/library:/opt/commander/library
+    # volumes:
+    #   - ./volumes/commander/library:/opt/commander/library
     networks:
       - application
       - backend
