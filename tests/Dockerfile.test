@@ -8,4 +8,4 @@ RUN pip3 install --no-cache-dir pytest
 
 WORKDIR /app
 
-COPY tests/ /app/tests/
+COPY ./integration/ /app/tests/

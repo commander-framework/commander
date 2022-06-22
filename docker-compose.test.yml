@@ -50,7 +50,7 @@ services:
       context: ./Commander
       target: runner-image
       args:
-        ADMIN_HASH: "$2a$10$vVcRyTf8ak5giptKB6pRHeBlli.EwLDolXqeNjJIhhulTudqoQo7S"  # only used for integration tests
+        ADMIN_HASH: '$$2a$$10$$vVcRyTf8ak5giptKB6pRHeBlli.EwLDolXqeNjJIhhulTudqoQo7S'  # only used for integration tests
         APP_NAME: ${APP_NAME}
         CA_HOSTNAME: "capy"
         DB_URI: mongodb://mongo
