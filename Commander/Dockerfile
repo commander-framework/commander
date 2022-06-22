@@ -87,10 +87,4 @@ ENV PATH="/home/myuser/venv/bin:$PATH"
 
 # /dev/shm is mapped to shared memory and is used to improve gunicorn heartbeat performance
 # each active agent counts as 1 constant event due to web sockets staying connected
-CMD ["gunicorn","-b","0.0.0.0:5000", \
-	 			"--workers",${WORKERS}, \
-				"--worker_connections",${WORKER_CONNECTIONS}, \
-				"--worker_class","gevent", \
-				"--worker-tmp-dir","/dev/shm", \
-				"--preload", \
-				"server:app"]
+CMD ["sh", "run.sh"]
