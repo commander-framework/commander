@@ -31,7 +31,7 @@ def test_agentRegistration(agentID):
 
 @pytest.mark.order(3)
 def test_adminCreation(adminJWT):
-    url = "https://{API_HOST}/admin/account"
+    url = f"https://{API_HOST}/admin/account"
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {adminJWT}"}
     data = {"username": "test",
