@@ -26,16 +26,16 @@ def test_agentRegistration(agentID):
     assert len(agentID) == 36
 
 
-# @pytest.mark.order(3)
-# def test_adminCreation(adminJWT):
-#     url = "https://localhost/admin/account"
-#     headers = {"Content-Type": "application/json",
-#                "Authorization": f"Bearer {adminJWT}"}
-#     data = {"username": "test",
-#             "password": "T3st_P@$$w0rd!",
-#             "name": "Test User"}
-#     response = requests.post(url,
-#                              headers=headers,
-#                              data=data)
-#     assert response.status_code == 200
-#     assert response.json()["success"] == "successfully created new admin account"
+@pytest.mark.order(3)
+def test_adminCreation(adminJWT):
+    url = "https://localhost/admin/account"
+    headers = {"Content-Type": "application/json",
+               "Authorization": f"Bearer {adminJWT}"}
+    data = {"username": "test",
+            "password": "T3st_P@$$w0rd!",
+            "name": "Test User"}
+    response = requests.post(url,
+                             headers=headers,
+                             data=data)
+    assert response.status_code == 200
+    assert response.json()["success"] == "successfully created new admin account"
