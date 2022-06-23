@@ -69,6 +69,7 @@ COPY --from=builder-image /home/abc/venv /home/abc/venv
 # create directory for runtime and switch to user
 WORKDIR /app
 COPY . .
+RUN chmod +x ./run.sh
 
 # expose port
 EXPOSE 5000
@@ -86,4 +87,4 @@ ENV PATH="/home/abc/venv/bin:$PATH"
 
 # /dev/shm is mapped to shared memory and is used to improve gunicorn heartbeat performance
 # each active agent counts as 1 constant event due to web sockets staying connected
-CMD ["su", "-c", "'sh run.sh'", "abc"]
+CMD ["su", "-c", "'./run.sh'", "abc"]
