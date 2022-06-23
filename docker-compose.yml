@@ -14,7 +14,7 @@ services:
   cache:
     image: redis:6.2-alpine
     container_name: "cache"
-    command: redis-server --save 20 1 --loglevel notice --requirepass "${REDIS_PASS}"
+    command: redis-server --save 20 1 --loglevel notice
     networks:
       - backend
     restart: always
@@ -46,7 +46,6 @@ services:
         DB_USER: ${DB_USER}
         DB_PASS: ${DB_PASS}
         LOG_LEVEL: ${LOG_LEVEL}
-        REDIS_PASS: ${REDIS_PASS}
         REDIS_URI: redis://cache:6379
         SECRET_KEY: ${SECRET_KEY}
         UPLOADS_DIR: "/opt/commander/library/"
