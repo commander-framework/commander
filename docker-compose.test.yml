@@ -15,8 +15,8 @@ services:
   mongo:
     container_name: "mongo"
     image: "mongo:5"
-    # volumes:
-    #   - ./volumes/mongo:/data/db
+    volumes:
+      - ./volumes/mongo:/data/db
     networks:
       - backend
     restart: always
@@ -45,6 +45,9 @@ services:
     networks:
       - backend
     restart: always
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
   commander:
     container_name: "commander"
     build:
@@ -67,12 +70,15 @@ services:
       - cache
       - capy
       - mongo
-    # volumes:
-    #   - ./volumes/commander/library:/opt/commander/library
+    volumes:
+      - ./volumes/commander/library:/opt/commander/library
     networks:
       - application
       - backend
     restart: always
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
   nginx:
     container_name: "nginx"
     build:
@@ -90,6 +96,9 @@ services:
     ports:
       - "443:443"
     restart: always
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
 
 networks:
   frontend:
