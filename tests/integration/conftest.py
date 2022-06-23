@@ -7,19 +7,21 @@ API_HOST = os.environ.get("API_HOST", "nginx")
 
 
 @pytest.fixture(scope="session")
-def adminJWT():
+def adminJWT(caPath):
     response = requests.post(f"https://{API_HOST}/admin/login",
                              headers={"Content-Type": "application/json"},
-                             data={"username": "admin", "password": "Th1s_i$_@_t3sT_p@$$w0rd"})
+                             data={"username": "admin", "password": "Th1s_i$_@_t3sT_p@$$w0rd"},
+                             verify=caPath)
     token = response.json()["token"]
     yield token
 
 
 @pytest.fixture(scope="session")
-def registrationKey(adminJWT):
+def registrationKey(adminJWT, caPath):
     response = requests.get(f"https://{API_HOST}/admin/registration-key",
                             headers={"Content-Type": "application/json",
-                                     "Authorization": f"Bearer {adminJWT}"})
+                                     "Authorization": f"Bearer {adminJWT}"},
+                            verify=caPath)
     registrationKey = response.json()["registrationKey"]
     yield registrationKey
 
