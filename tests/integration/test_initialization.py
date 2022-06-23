@@ -9,12 +9,13 @@ Ensure that all of our fixtures that we use in integration tests are set up corr
 API_HOST = os.environ.get("API_HOST", "nginx")
 
 @pytest.mark.order(0)
-def test_authentication(adminJWT):
+def test_authentication(adminJWT, caPath):
     url = f"https://{API_HOST}/admin/authenticate"
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {adminJWT}"}
     response = requests.post(url,
-                             headers=headers)
+                             headers=headers,
+                             verify=caPath)
     assert response.status_code == 200
     assert response.json()["success"] == "successfully created new admin account"
 
@@ -30,7 +31,7 @@ def test_agentRegistration(agentID):
 
 
 @pytest.mark.order(3)
-def test_adminCreation(adminJWT):
+def test_adminCreation(adminJWT, caPath):
     url = f"https://{API_HOST}/admin/account"
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {adminJWT}"}
@@ -39,6 +40,7 @@ def test_adminCreation(adminJWT):
             "name": "Test User"}
     response = requests.post(url,
                              headers=headers,
-                             data=data)
+                             data=data,
+                             verify=caPath)
     assert response.status_code == 200
     assert response.json()["success"] == "successfully created new admin account"
