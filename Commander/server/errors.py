@@ -34,7 +34,7 @@ def handle_500(error):
 
 @app.errorhandler(MethodNotAllowed)
 def handle_405(error):
-    """ Return JSON instead of HTML for 400 errors. """
+    """ Return JSON instead of HTML for 405 errors. """
     response = error.get_response()
     response.data = json.dumps({
         "code": error.code,
