@@ -18,7 +18,7 @@ def test_authentication(adminJWT, caPath):
                             headers=headers,
                             verify=caPath)
     assert response.status_code == 200
-    assert response.json()["success"] == "successfully created new admin account"
+    assert response.json()["success"] == "authentication token is valid"
 
 
 @pytest.mark.order(1)
