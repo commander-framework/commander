@@ -8,7 +8,7 @@ def missing(request, headers=None, data=None):
     if headers:
         for header in headers:
             if header not in request.headers:
-                log.debug(f"'{field}' not found in request headers: {request.headers}")
+                log.debug(f"'{header}' not found in request headers: {request.headers}")
                 missingHeaders.append(header)
     if data:
         for field in data:
