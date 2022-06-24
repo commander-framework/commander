@@ -42,13 +42,13 @@ def agentID(caPath, cert, registrationKey):
     yield agentID
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def cert():
     certPath = "/app/ca/certs/proxy/proxy.crt"
     keyPath = "/app/ca/certs/proxy/proxy.pem"
     yield (certPath, keyPath)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def caPath():
-    yield "/app/ca/capy/ca.crt"
+    yield "/app/ca/ca.crt"
