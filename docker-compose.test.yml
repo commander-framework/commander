@@ -12,6 +12,8 @@ services:
       - ./volumes/capy:/app/ca:ro
     networks:
       - frontend
+    environment:
+      API_HOST: "nginx"
   mongo:
     container_name: "mongo"
     image: "mongo:5"
