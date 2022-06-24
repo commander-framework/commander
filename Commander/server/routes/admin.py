@@ -354,14 +354,14 @@ def getRegistrationKey():
     # return current key if one exists
     regKeyQuery = RegistrationKey.objects()
     if regKeyQuery:
-        return {"registration-key": regKeyQuery[0]["regKey"]}
+        return {"registrationKey": regKeyQuery[0]["regKey"]}
     # create registration key in db
     newKey = str(uuid4())
     regKey = RegistrationKey(regKey=newKey)
     regKey.save()
     # return new key
     log.info(f"<{request.remote_addr}> successfully fetched registration key")
-    return {"registration-key": newKey}
+    return {"registrationKey": newKey}
 
 
 @app.put("/admin/registration-key")
@@ -381,4 +381,4 @@ def updateRegistrationKey():
     regKey.save()
     # return new key
     log.info(f"<{request.remote_addr}> successfully regenerated the registration key")
-    return {"registration-key": newKey}
+    return {"registrationKey": newKey}
