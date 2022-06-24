@@ -1,3 +1,4 @@
+import json
 import os
 import pytest
 import requests
@@ -10,7 +11,7 @@ API_HOST = os.environ.get("API_HOST", "nginx")
 def adminJWT(caPath):
     response = requests.post(f"https://{API_HOST}/admin/login",
                              headers={"Content-Type": "application/json"},
-                             data={"username": "admin", "password": "Th1s_i$_@_t3sT_p@$$w0rd"},
+                             data=json.dumps({"username": "admin", "password": "Th1s_i$_@_t3sT_p@$$w0rd"}),
                              verify=caPath)
     token = response.json()["token"]
     yield token
@@ -35,7 +36,7 @@ def agentID(caPath, cert, registrationKey):
             "os": "Linux"}
     response = requests.post(url,
                              headers=headers,
-                             data=data,
+                             data=json.dumps(data),
                              verify=caPath,
                              cert=cert)
     agentID = response.json()["agentID"]
