@@ -338,6 +338,24 @@ def newAdmin():
     return {"success": "successfully created new admin account"}, 200
 
 
+@app.delete("/admin/account")
+@jwt_required()
+def deleteAdmin():
+    """ Delete an admin account """
+    log.debug(f"<{request.remote_addr}> deleting admin account")
+    if missingParams := missing(request, data=["username"]):
+        log.warning(f"<{request.remote_addr}> {missingParams}")
+        return {"error": missingParams}, 400
+    adminQuery = User.objects(username__exact=request.json["username"])
+    if not adminQuery:
+        log.warning(f"<{request.remote_addr}> failed to delete account because the username doesn't exist")
+        return {"error": "username not found"}, 400
+    # delete the admin account
+    adminQuery.first().delete()
+    log.info(f"<{request.remote_addr}> successfully deleted admin account '{request.json['username']}'")
+    return {"success": "successfully deleted admin account"}, 200
+
+
 @app.get("/admin/authenticate")
 @jwt_required()
 def testAuthentication():
