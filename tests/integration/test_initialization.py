@@ -1,3 +1,4 @@
+import json
 import os
 import pytest
 import requests
@@ -10,12 +11,12 @@ API_HOST = os.environ.get("API_HOST", "nginx")
 
 @pytest.mark.order(0)
 def test_authentication(adminJWT, caPath):
-    url = f"https://{API_HOST}/admin/authenticate"
+    # prepare and send login request for default admin
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {adminJWT}"}
-    response = requests.post(url,
-                             headers=headers,
-                             verify=caPath)
+    response = requests.get(f"https://{API_HOST}/admin/authenticate",
+                            headers=headers,
+                            verify=caPath)
     assert response.status_code == 200
     assert response.json()["success"] == "successfully created new admin account"
 
@@ -32,15 +33,26 @@ def test_agentRegistration(agentID):
 
 @pytest.mark.order(3)
 def test_adminCreation(adminJWT, caPath):
-    url = f"https://{API_HOST}/admin/account"
+    # prepare and send new admin request
     headers = {"Content-Type": "application/json",
                "Authorization": f"Bearer {adminJWT}"}
     data = {"username": "test",
             "password": "T3st_P@$$w0rd!",
             "name": "Test User"}
-    response = requests.post(url,
+    response = requests.post(f"https://{API_HOST}/admin/account",
                              headers=headers,
-                             data=data,
+                             data=json.dumps(data),
                              verify=caPath)
     assert response.status_code == 200
     assert response.json()["success"] == "successfully created new admin account"
+    # validate that we can log in with the new account
+    url = f"https://{API_HOST}/admin/login"
+    headers = {"Content-Type": "application/json"},
+    data = {"username": "test",
+            "password": "T3st_P@$$w0rd!"}
+    response = requests.post(url,
+                             headers=headers,
+                             data=json.dumps(data),
+                             verify=caPath)
+    assert response.status_code == 200
+    assert "token" in response.json()
