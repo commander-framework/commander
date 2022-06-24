@@ -38,7 +38,7 @@ adminDB = connect(db="admins",
                   host=Config.DB_URI)
 
 # create first admin if it doesn't already exist
-adminQuery = User.objects(username="admin")
+adminQuery = User.objects(username__exact="admin")
 if not adminQuery:
     defaultAdmin = User(username="admin",
                    name="Default Admin",
