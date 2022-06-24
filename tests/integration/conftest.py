@@ -31,7 +31,7 @@ def registrationKey(adminJWT, caPath):
 def agentID(caPath, cert, registrationKey):
     url = f"https://{API_HOST}/agent/register"
     headers = {"Content-Type": "application/json"}
-    data = {"registrationKey:": registrationKey,
+    data = {"registrationKey": registrationKey,
             "hostname": "test-hostname",
             "os": "Linux"}
     response = requests.post(url,
