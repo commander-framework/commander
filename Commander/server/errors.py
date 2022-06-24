@@ -1,7 +1,7 @@
 import json
 from server import app, log
 from simple_websocket import ConnectionClosed
-from werkzeug.exceptions import InternalServerError, NotFound, BadRequest
+from werkzeug.exceptions import InternalServerError, NotFound, BadRequest, MethodNotAllowed
 
 
 class CommanderError(Exception):
@@ -30,6 +30,19 @@ def handle_500(error):
     log.error(response.data)
     response.content_type = "application/json"
     return response, 500
+
+
+@app.errorhandler(MethodNotAllowed)
+def handle_405(error):
+    """ Return JSON instead of HTML for 400 errors. """
+    response = error.get_response()
+    response.data = json.dumps({
+        "code": error.code,
+        "name": error.name,
+        "description": error.description})
+    log.debug(response.data)
+    response.content_type = "application/json"
+    return response, 405
 
 
 @app.errorhandler(NotFound)
