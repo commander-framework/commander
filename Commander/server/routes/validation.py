@@ -1,3 +1,4 @@
+from server import log
 
 
 def missing(request, headers=None, data=None):
@@ -7,10 +8,12 @@ def missing(request, headers=None, data=None):
     if headers:
         for header in headers:
             if header not in request.headers:
+                log.debug(f"'{field}' not found in request headers: {request.headers}")
                 missingHeaders.append(header)
     if data:
         for field in data:
             if field not in request.json:
+                log.debug(f"'{field}' not found in request data: {request.json}")
                 missingData.append(field)
     if not missingHeaders and not missingData:
         return None
