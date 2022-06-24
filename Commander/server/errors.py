@@ -43,6 +43,18 @@ def handle_404(error):
     response.content_type = "application/json"
     return response, 404
 
+
+@app.errorhandler(NotFound)
+def handle_400(error):
+    """ Return JSON instead of HTML for 400 errors. """
+    response = error.get_response()
+    response.data = json.dumps({
+        "code": error.code,
+        "name": error.name,
+        "description": error.description})
+    response.content_type = "application/json"
+    return response, 400
+
 @app.errorhandler(ConnectionClosed)
 def handle_connection_closed(error):
     """ Log unexpected websocket connection closed errors. """
