@@ -8,7 +8,7 @@ def testGenRegKey(client, sample_valid_JWT):
                                     "Authorization": "Bearer " + sample_valid_JWT},
                           data=json.dumps({}))
     assert response.status_code == 200
-    assert "registration-key" in response.json
+    assert "registrationKey" in response.json
 
 
 def testGetRegKey(client, sample_RegistrationKey, sample_valid_JWT):
@@ -21,4 +21,4 @@ def testGetRegKey(client, sample_RegistrationKey, sample_valid_JWT):
                                     "Authorization": "Bearer " + sample_valid_JWT},
                           data=json.dumps({}))
     assert response.status_code == 200
-    assert response.json["registration-key"] == sample_RegistrationKey["regKey"]
+    assert response.json["registrationKey"] == sample_RegistrationKey["regKey"]
