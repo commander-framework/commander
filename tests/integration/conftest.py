@@ -25,7 +25,7 @@ def adminJWT(request):
                              data=json.dumps({"username": "test",
                                               "password": "T3st_P@$$w0rd!",
                                               "name": "Test User"}),
-                             verify=caPath)
+                             verify=request.param)
     assert response.status_code == 200
     assert response.json()["success"] == "successfully created new admin account"
     # log in with the new account
@@ -33,7 +33,7 @@ def adminJWT(request):
                              headers={"Content-Type": "application/json"},
                              data=json.dumps({"username": "test",
                                               "password": "T3st_P@$$w0rd!"}),
-                             verify=caPath)
+                             verify=request.param)
     assert response.status_code == 200
     assert "token" in response.json()
     token = response.json()["token"]
