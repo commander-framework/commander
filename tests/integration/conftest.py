@@ -40,7 +40,7 @@ def adminJWT(request):
     # yield token for tests
     yield token
     # all tests done; delete test admin account
-    response = requests.delete("https://{API_HOST}/admin/account",
+    response = requests.delete(f"https://{API_HOST}/admin/account",
                              headers={"Content-Type": "application/json",
                                       "Authorization": "Bearer " + token},
                              data=json.dumps({"username": "test"}),
