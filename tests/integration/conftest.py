@@ -7,14 +7,45 @@ import requests
 API_HOST = os.environ.get("API_HOST", "nginx")
 
 
-@pytest.fixture(scope="session")
-def adminJWT(caPath):
+@pytest.fixture(scope="session", params=["/app/ca/ca.crt"])
+def adminJWT(request):
+    # log in with default admin
     response = requests.post(f"https://{API_HOST}/admin/login",
                              headers={"Content-Type": "application/json"},
-                             data=json.dumps({"username": "admin", "password": "Th1s_i$_@_t3sT_p@$$w0rd"}),
-                             verify=caPath)
+                             data=json.dumps({"username": "admin",
+                                              "password": "Th1s_i$_@_t3sT_p@$$w0rd"}),
+                             verify=request.param)
+    assert response.status_code == 200
+    assert "token" in response.json()
     token = response.json()["token"]
+    # create admin account for tests
+    response = requests.post(f"https://{API_HOST}/admin/account",
+                             headers={"Content-Type": "application/json",
+                                      "Authorization": f"Bearer {token}"},
+                             data=json.dumps({"username": "test",
+                                              "password": "T3st_P@$$w0rd!",
+                                              "name": "Test User"}),
+                             verify=caPath)
+    assert response.status_code == 200
+    assert response.json()["success"] == "successfully created new admin account"
+    # log in with the new account
+    response = requests.post(f"https://{API_HOST}/admin/login",
+                             headers={"Content-Type": "application/json"},
+                             data=json.dumps({"username": "test",
+                                              "password": "T3st_P@$$w0rd!"}),
+                             verify=caPath)
+    assert response.status_code == 200
+    assert "token" in response.json()
+    token = response.json()["token"]
+    # yield token for tests
     yield token
+    # all tests done; delete test admin account
+    response = requests.delete("/admin/account",
+                             headers={"Content-Type": "application/json",
+                                      "Authorization": "Bearer " + token},
+                             data=json.dumps({"username": "test"}))
+    assert response.status_code == 200
+    assert response.json["success"] == "successfully deleted admin account"
 
 
 @pytest.fixture(scope="session")
