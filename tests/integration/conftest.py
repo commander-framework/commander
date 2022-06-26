@@ -46,7 +46,7 @@ def adminJWT(request):
                              data=json.dumps({"username": "test"}),
                              verify=request.param)
     assert response.status_code == 200
-    assert response.json["success"] == "successfully deleted admin account"
+    assert response.json()["success"] == "successfully deleted admin account"
 
 
 @pytest.fixture(scope="session")
