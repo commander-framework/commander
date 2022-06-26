@@ -17,8 +17,6 @@ services:
   mongo:
     container_name: "mongo"
     image: "mongo:5"
-    volumes:
-      - ./volumes/mongo:/data/db
     networks:
       - backend
     restart: always
@@ -72,8 +70,6 @@ services:
       - cache
       - capy
       - mongo
-    volumes:
-      - ./volumes/commander/library:/opt/commander/library
     networks:
       - application
       - backend
