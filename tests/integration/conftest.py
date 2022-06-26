@@ -43,7 +43,8 @@ def adminJWT(request):
     response = requests.delete("https://{API_HOST}/admin/account",
                              headers={"Content-Type": "application/json",
                                       "Authorization": "Bearer " + token},
-                             data=json.dumps({"username": "test"}))
+                             data=json.dumps({"username": "test"}),
+                             verify=request.param)
     assert response.status_code == 200
     assert response.json["success"] == "successfully deleted admin account"
 
