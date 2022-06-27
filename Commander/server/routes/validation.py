@@ -48,7 +48,7 @@ def missingJobForm(request, data=None):
 
 def missingJobFields(jobJson):
     """ Return error message about missing job fields if there are any """
-    requiredFields = ["executor", "filename", "description", "os", "user", "timeCreated"]
+    requiredFields = ["executor", "filename", "description", "os", "user"]
     missingFields = []
     for field in requiredFields:
         if field not in jobJson:
