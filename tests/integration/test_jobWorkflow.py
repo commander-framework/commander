@@ -65,8 +65,9 @@ def test_assignJob(caPath, adminJWT, agentID):
 def test_fetchAndExecuteJob(caPath, cert, agentID):
     # get the assigned job from the server
     jobs = json.loads(asyncio.run(checkin(caPath, cert, agentID)))
-    assert len(jobs) == 1
-    job = jobs[0]
+    assert "jobs" in jobs
+    assert len(jobs["jobs"]) == 1
+    job = jobs["jobs"][0]
     assert job["executor"] == "bash"
     assert job["filename"] == "hello_world.sh"
     assert job["description"] == "Test job description. This job is not real."
