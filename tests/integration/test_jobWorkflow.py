@@ -84,7 +84,7 @@ def test_fetchAndExecuteJob(caPath, cert, agentID):
     responseFilename = responseDisposition[responseDisposition.index("filename=") + 9:]
     assert responseFilename == job["filename"]
     with open(f"/tmp/{job['filename']}.job", "wb") as f:
-        f.write(response.data)
+        f.write(response.content)
     with ZipFile(f"/tmp/{job['filename']}.job", "r") as jobArchive:
         jobArchive.extractall(f"/tmp/{job['jobID']}")
     # execute job
