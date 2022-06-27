@@ -5,7 +5,7 @@ import pytest
 import requests
 import ssl
 import subprocess
-from ..utils import utcNowTimestamp
+from utils import utcNowTimestamp
 import websockets
 from zipfile import ZipFile
 

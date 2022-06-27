@@ -9,3 +9,4 @@ RUN pip3 install --no-cache-dir pytest pytest-order requests websockets
 WORKDIR /app
 
 COPY ./integration/ /app/tests/
+COPY ./utils/ /app/utils/
