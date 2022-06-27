@@ -37,6 +37,7 @@ def missingJobForm(request, data=None):
     if data:
         for field in data:
             if field not in request.form and field not in request.files:
+                log.debug(f"'{field}' not found in request data: {request.form}")
                 missingData.append(field)
     if not missingData:
         return None
