@@ -17,23 +17,24 @@ async def checkin(caPath, cert, agentID):
     sslContext = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     sslContext.load_verify_locations(caPath)
     sslContext.load_cert_chain(certfile=cert[0], keyfile=cert[1])
-    async with websockets.connect("wss://{API_HOST}/agent/checkin",
+    async with websockets.connect(f"wss://{API_HOST}/agent/checkin",
                                   ssl=sslContext) as ws:
         await ws.send(json.dumps({"Agent-ID": agentID}))
-        jobs = await asyncio.wait_for(ws.recv(), timeout=2)
+        try:
+            jobs = await asyncio.wait_for(ws.recv(), timeout=1)
+        except TimeoutError:
+            jobs = None
         if jobs:
             await ws.send("ack")
     return jobs
-
 
 
 @pytest.mark.order(3)
 def test_createJob(caPath, adminJWT, sampleJob):
     # add new job to the library
     response = requests.post(f"https://{API_HOST}/admin/library",
-                            headers={"Content-Type": "multipart/form-data",
-                                     "Authorization": f"Bearer {adminJWT}"},
-                            data=sampleJob,
+                            headers={"Authorization": f"Bearer {adminJWT}"},
+                            files=sampleJob,
                             verify=caPath)
     assert response.status_code == 200
     assert response.json()["success"] == "successfully added new executable to the commander library"

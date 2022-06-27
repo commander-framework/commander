@@ -100,12 +100,12 @@ def sampleJob():
         f.write("#!/bin/bash\n\necho Hello world!\n")
     with open("/tmp/manifest.json", "w+") as f:
         f.write(json.dumps(jobDoc))
-    with zipfile.ZipFile("/tmp/hello_world.job", "w", zipfile.ZIP_DEFLATED) as a:
+    with zipfile.ZipFile("/tmp/hello_world.sh.job", "w", zipfile.ZIP_DEFLATED) as a:
         a.write("/tmp/hello_world.sh", arcname="hello_world.sh")
         a.write("/tmp/manifest.json", arcname="manifest.json")
-    jobFile = open("/tmp/hello_world.job", "rb")
-    job = {"job": jobDoc,
-           "file": (jobFile, "hello_world.job")}
+    jobFile = open("/tmp/hello_world.sh.job", "rb")
+    job = {"job": (None, json.dumps(jobDoc), "application/json"),
+           "file": ("hello_world.sh.job", jobFile, "application/octet-stream")}
     yield job
     # close file handle after tests
     jobFile.close()
