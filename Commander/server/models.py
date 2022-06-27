@@ -14,7 +14,7 @@ class Job(EmbeddedDocument):
     timeStarted = StringField()
     timeEnded = StringField()
     argv = ListField(StringField())
-    status = IntField()
+    exitCode = IntField()
     stdout = StringField()
     stderr = StringField()
     meta = {"db_alias": "agent_db"}
