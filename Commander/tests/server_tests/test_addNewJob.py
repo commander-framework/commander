@@ -27,8 +27,7 @@ def testNewJob(client, sample_Job, sample_valid_JWT):
     assert libraryJobs[0]["filename"] == sample_Job["filename"]
     assert libraryJobs[0]["description"] == sample_Job["description"]
     assert libraryJobs[0]["os"] == sample_Job["os"]
-    assert libraryJobs[0]["user"] == sample_Job["user"]
-    assert libraryJobs[0]["timeCreated"] == sample_Job["timeCreated"]
+    assert libraryJobs[0]["user"] == "testuser"
     # make sure file saved correctly
     with open(gettempdir()+sep+sample_Job["filename"], "rb") as testfile:
         assert testfile.read() == b"test content"
@@ -53,8 +52,6 @@ def testMissingJobFieldNewJob(client, sample_Job, sample_valid_JWT):
     job.pop("filename")
     job.pop("description")
     job.pop("os")
-    job.pop("user")
-    job.pop("timeCreated")
     # add new job to the library
     data = {"job": json.dumps(job),
             "file": (io.BytesIO(b"test content"), "testfile")}
@@ -63,7 +60,7 @@ def testMissingJobFieldNewJob(client, sample_Job, sample_valid_JWT):
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=data)
     assert response.status_code == 400
-    assert response.json["error"] == "the job in the request is missing the following fields: ['executor', 'filename', 'description', 'os', 'user', 'timeCreated']"
+    assert response.json["error"] == "the job in the request is missing the following fields: ['executor', 'filename', 'description', 'os']"
 
 
 def testDuplicateNewJob(client, sample_Job, sample_valid_JWT):

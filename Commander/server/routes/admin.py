@@ -176,6 +176,9 @@ def addNewJob():
         log.warning(f"<{request.remote_addr}> {missingFields}")
         return {"error": missingFields}, 400
     libraryEntry = Job(**newJob)
+    libraryEntry["jobID"] = str(uuid4())
+    libraryEntry["user"] = get_jwt_identity()
+    libraryEntry["timeCreated"] = utcNowTimestamp()
     # create library if it doesn't already exist
     libraryQuery = Library.objects()
     if not libraryQuery:
@@ -223,6 +226,8 @@ def updateJob():
     if "file" in request.files:
         uploadedFile = request.files["file"]
         uploadedFile.save(app.config["UPLOADS_DIR"] + request.form["filename"])
+        job = jobsQuery[0]
+        job["user"] = get_jwt_identity()  # update owner to the person who uploaded the file
         log.info(f"<{request.remote_addr}> updated job file for '{request.form['filename']}'")
     # update library description for file if a new one was provided
     if "description" in request.form:
