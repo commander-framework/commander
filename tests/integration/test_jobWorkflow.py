@@ -22,7 +22,7 @@ async def checkin(caPath, cert, agentID):
         await ws.send(json.dumps({"Agent-ID": agentID}))
         try:
             jobs = await asyncio.wait_for(ws.recv(), timeout=1)
-        except TimeoutError:
+        except asyncio.exceptions.TimeoutError:
             jobs = None
         if jobs:
             await ws.send("ack")
@@ -58,7 +58,7 @@ def test_assignJob(caPath, adminJWT, agentID):
                                             "argv": []}),
                             verify=caPath)
     assert response.status_code == 200
-    assert response.json["success"] == "job successfully submitted -- waiting for agent to check in"
+    assert response.json()["success"] == "job successfully submitted -- waiting for agent to check in"
 
 
 @pytest.mark.order(6)
@@ -102,4 +102,4 @@ def test_fetchAndExecuteJob(caPath, cert, agentID):
                             verify=caPath,
                             cert=cert)
     assert response.status_code == 200
-    assert response.json["success"] == "successfully saved job response"
+    assert response.json()["success"] == "successfully saved job response"
