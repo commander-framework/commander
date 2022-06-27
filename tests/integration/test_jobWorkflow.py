@@ -76,19 +76,19 @@ def test_fetchAndExecuteJob(caPath, cert, agentID):
     response = requests.get(f"https://{API_HOST}/agent/execute",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": agentID},
-                           data=json.dumps({"filename": job.filename}),
+                           data=json.dumps({"filename": job["filename"]}),
                            verify=caPath,
                            cert=cert)
     assert response.status_code == 200
     responseDisposition = response.headers["Content-Disposition"]
     responseFilename = responseDisposition[responseDisposition.index("filename=") + 9:]
-    assert responseFilename == job.filename
-    with open(f"/tmp/{job.filename}.job", "wb") as f:
+    assert responseFilename == job["filename"]
+    with open(f"/tmp/{job['filename']}.job", "wb") as f:
         f.write(response.data)
-    with ZipFile(f"/tmp/{job.filename}.job", "r") as jobArchive:
-        jobArchive.extractall(f"/tmp/{job.jobID}")
+    with ZipFile(f"/tmp/{job['filename']}.job", "r") as jobArchive:
+        jobArchive.extractall(f"/tmp/{job['jobID']}")
     # execute job
-    commandLine = ["bash", "-c", f"/tmp/{job.jobID}/{job.filename}"] + [arg for arg in job.argv]
+    commandLine = ["bash", "-c", f"/tmp/{job['jobID']}/{job['filename']}"] + [arg for arg in job['argv']]
     job["timeStarted"] = utcNowTimestamp()
     result = subprocess.run(commandLine)
     job["timeEnded"] = utcNowTimestamp()
