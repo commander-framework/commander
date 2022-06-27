@@ -137,7 +137,7 @@ def postJobResults():
         log.warning(f"<{request.remote_addr}> agentID not found in database")
         return {"error": "agent ID not found"}, 400
     agent = agentQuery[0]
-    finishedJob = json.loads(request.json["job"])
+    finishedJob = request.json["job"]
     jobRunningQuery = list(filter(lambda job: job["filename"] == finishedJob["filename"], agent["jobsRunning"]))
     if not jobRunningQuery:
         log.warning(f"<{request.remote_addr}> agent does not have a running job with the given filename")
