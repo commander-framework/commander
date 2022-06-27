@@ -12,10 +12,9 @@ API_HOST = os.environ.get("API_HOST", "nginx")
 @pytest.mark.order(0)
 def test_authentication(adminJWT, caPath):
     # prepare and send login request for test admin
-    headers = {"Content-Type": "application/json",
-               "Authorization": f"Bearer {adminJWT}"}
     response = requests.get(f"https://{API_HOST}/admin/authenticate",
-                            headers=headers,
+                            headers={"Content-Type": "application/json",
+                                     "Authorization": f"Bearer {adminJWT}"},
                             verify=caPath)
     assert response.status_code == 200
     assert response.json()["success"] == "authentication token is valid"
