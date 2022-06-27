@@ -2,6 +2,7 @@ import json
 import os
 import pytest
 import requests
+import zipfile
 
 
 API_HOST = os.environ.get("API_HOST", "nginx")
@@ -85,3 +86,27 @@ def cert():
 @pytest.fixture(scope="session")
 def caPath():
     yield "/app/ca/ca.crt"
+
+
+@pytest.fixture(scope="session")
+def sampleJob():
+    # create job json
+    jobDoc = {"executor": "bash",
+              "filename": "hello_world.sh",
+              "description": "Test job description. This job is not real.",
+              "os": "linux"}
+    # create job archive
+    with open("/tmp/hello_world.sh", "w+") as f:
+        f.write("#!/bin/bash\n\necho Hello world!\n")
+    with open("/tmp/manifest.json", "w+") as f:
+        f.write(json.dumps(jobDoc))
+    with zipfile.ZipFile("/tmp/hello_world.job", "w", zipfile.ZIP_DEFLATED) as a:
+        a.write("/tmp/hello_world.sh", arcname="hello_world.sh")
+        a.write("/tmp/manifest.json", arcname="manifest.json")
+    jobFile = open("/tmp/hello_world.job", "rb")
+    job = {"job": jobDoc,
+           "file": (jobFile, "hello_world.job")}
+    yield job
+    # close file handle after tests
+    jobFile.close()
+    
