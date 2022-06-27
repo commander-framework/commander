@@ -77,7 +77,7 @@ def agentCheckin(ws):
                 continue
             # send jobs to agent
             log.info(f"<{ws.sock.getpeername()[0]}> sending jobs to agent {agent['agentID']} ({agent['hostname']})")
-            ws.send(json.dumps({"jobs": json.dumps(jobs)}))
+            ws.send(json.dumps({"jobs": jobs}))
             # wait for acknowledgement from agent before marking job as running
             ack = ws.receive()
             if ack != "ack":
