@@ -54,6 +54,19 @@ jobs:
   integration-test:
     runs-on: ubuntu-latest
     needs: unit-test
+    environment: Test
+    env:
+      APP_NAME: ${{ secrets.APP_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASS: ${{ secrets.DB_PASS }}
+      REDIS_PASS: ${{ secrets.REDIS_PASS }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      PROXY_DOMAIN: ${{ secrets.PROXY_DOMAIN }}
+      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+      WORKERS: ${{ secrets.WORKERS }}
+      WORKER_CONNECTIONS: ${{ secrets.WORKER_CONNECTIONS }}
+      PUID: ${{ secrets.PUID }}
+      PGID: ${{ secrets.PGID }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
