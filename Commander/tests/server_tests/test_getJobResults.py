@@ -9,7 +9,7 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     job["timeDispatched"] = utcNowTimestamp()
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -17,7 +17,7 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     agent["jobsHistory"].append(job)
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
@@ -39,7 +39,7 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     assert timeStarted >= timeDispatched
     assert timeEnded >= timeStarted
     assert finishedJob["argv"] == job["argv"]
-    assert finishedJob["status"] == job["status"]
+    assert finishedJob["exitCode"] == job["exitCode"]
     assert finishedJob["stdout"] == job["stdout"]
     assert finishedJob["stderr"] == job["stderr"]
 
@@ -50,7 +50,7 @@ def testNoJobsGetResults(client, sample_Agent, sample_valid_JWT):
     # intentionally not adding job to agent history
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
@@ -65,7 +65,7 @@ def testUnknownAgentGetResults(client, sample_Job, sample_Agent, sample_valid_JW
     job["timeDispatched"] = utcNowTimestamp()
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -73,7 +73,7 @@ def testUnknownAgentGetResults(client, sample_Job, sample_Agent, sample_valid_JW
     agent["jobsHistory"].append(job)
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": "not_an_agent"}))
@@ -87,7 +87,7 @@ def testMissingFieldsGetResults(client, sample_Job, sample_Agent, sample_valid_J
     job["timeDispatched"] = utcNowTimestamp()
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -95,7 +95,7 @@ def testMissingFieldsGetResults(client, sample_Job, sample_Agent, sample_valid_J
     agent["jobsHistory"].append(job)
     agent.save()
     # get finished jobs for sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({}))

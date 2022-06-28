@@ -11,7 +11,7 @@ def testUpdateRegKey(client, sample_RegistrationKey, sample_valid_JWT):
                                     "Authorization": "Bearer " + sample_valid_JWT},
                           data=json.dumps({}))
     assert response.status_code == 200
-    assert "registration-key" in response.json
+    assert "registrationKey" in response.json
 
 
 def testNewRegKey(client, sample_valid_JWT):
@@ -21,4 +21,4 @@ def testNewRegKey(client, sample_valid_JWT):
                                     "Authorization": "Bearer " + sample_valid_JWT},
                           data=json.dumps({}))
     assert response.status_code == 200
-    assert "registration-key" in response.json
+    assert "registrationKey" in response.json

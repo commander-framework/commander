@@ -2,6 +2,9 @@
 commander.log
 volumes/
 
+# nektos/act
+bin/act
+
 # IDE metadata
 .idea/
 .vscode/

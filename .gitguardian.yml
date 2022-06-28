@@ -3,3 +3,4 @@ paths-ignore:
   - "**/tests/**"
   - "doc/*"
   - "LICENSE"
+  - "docker-compose.test.yml"

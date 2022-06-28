@@ -4,8 +4,9 @@ FROM ubuntu:20.04
 RUN apt-get update && apt-get install --no-install-recommends -y python3.9 python3-pip && \
 	apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir pytest
+RUN pip3 install --no-cache-dir pytest pytest-order requests websockets
 
 WORKDIR /app
 
-COPY tests/ /app/tests/
+COPY ./integration/ /app/tests/
+COPY ./utils/ /app/utils/

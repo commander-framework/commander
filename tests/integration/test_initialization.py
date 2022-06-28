@@ -1,41 +1,30 @@
+import json
+import os
 import pytest
 import requests
 
+"""
+Ensure that all of our fixtures that we use in integration tests are set up correctly.
+"""
+
+API_HOST = os.environ.get("API_HOST", "nginx")
 
 @pytest.mark.order(0)
-def test_adminCreation():
-    pass
+def test_authentication(adminJWT, caPath):
+    # prepare and send login request for test admin
+    response = requests.get(f"https://{API_HOST}/admin/authenticate",
+                            headers={"Content-Type": "application/json",
+                                     "Authorization": f"Bearer {adminJWT}"},
+                            verify=caPath)
+    assert response.status_code == 200
+    assert response.json()["success"] == "authentication token is valid"
 
 
 @pytest.mark.order(1)
-def test_createRegistrationKey():
-    pass
+def test_registrationKey(registrationKey):
+    assert len(registrationKey) == 36
 
 
 @pytest.mark.order(2)
-def test_getRegistrationKey():
-    pass
-
-
-@pytest.mark.order(3)
-def test_agentRegistration():
-    certPath = "/app/ca/certs/proxy/proxy.crt"
-    keyPath = "/app/ca/certs/proxy/proxy.pem"
-    caPath = "/app/ca/capy/ca.crt"
-    cert = (certPath, keyPath)
-    url = "https://localhost/agent/jobs"
-    headers = {"Content-Type": "application/json"}
-    data = {"agentID": "agent1", "groups": ["group1"]}
-
-    response = requests.post(url,
-                             headers=headers,
-                             data=data,
-                             verify=caPath,
-                             cert=cert)
-
-    print(response.status_code, response.json())
-
-
-@pytest.mark.order(4)
-def test_createJob():
-    pass
+def test_agentRegistration(agentID):
+    assert len(agentID) == 36

@@ -1,8 +1,9 @@
 version: "3.9"
 services:
   sut:
+    container_name: "sut"
     build:
-      context: ./Test
+      context: ./tests
       dockerfile: Dockerfile.test
     depends_on:
       - capy
@@ -11,11 +12,11 @@ services:
       - ./volumes/capy:/app/ca:ro
     networks:
       - frontend
+    environment:
+      API_HOST: "nginx"
   mongo:
     container_name: "mongo"
     image: "mongo:5"
-    volumes:
-      - ./volumes/mongo:/data/db
     networks:
       - backend
     restart: always
@@ -25,7 +26,7 @@ services:
   cache:
     image: redis:6.2-alpine
     container_name: "cache"
-    command: redis-server --save 20 1 --loglevel notice --requirepass "${REDIS_PASS}"
+    command: redis-server --save 20 1 --loglevel notice
     networks:
       - backend
     restart: always
@@ -44,19 +45,22 @@ services:
     networks:
       - backend
     restart: always
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
   commander:
     container_name: "commander"
     build:
       context: ./Commander
       target: runner-image
       args:
+        ADMIN_HASH: '$$2a$$10$$vVcRyTf8ak5giptKB6pRHeBlli.EwLDolXqeNjJIhhulTudqoQo7S'  # only used for integration tests
         APP_NAME: ${APP_NAME}
         CA_HOSTNAME: "capy"
         DB_URI: mongodb://mongo
         DB_USER: ${DB_USER}
         DB_PASS: ${DB_PASS}
         LOG_LEVEL: ${LOG_LEVEL}
-        REDIS_PASS: ${REDIS_PASS}
         REDIS_URI: redis://cache:6379
         SECRET_KEY: ${SECRET_KEY}
         UPLOADS_DIR: "/opt/commander/library/"
@@ -66,12 +70,13 @@ services:
       - cache
       - capy
       - mongo
-    volumes:
-      - ./volumes/commander/library:/opt/commander/library
     networks:
       - application
       - backend
     restart: always
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
   nginx:
     container_name: "nginx"
     build:
@@ -89,6 +94,9 @@ services:
     ports:
       - "443:443"
     restart: always
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
 
 networks:
   frontend:

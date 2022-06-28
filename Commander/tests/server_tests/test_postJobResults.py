@@ -11,7 +11,7 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     agent["jobsRunning"].append(job)
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -20,11 +20,11 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 200
     assert response.json["success"] == "successfully saved job response"
     # get finished jobs for the sample agent from the api server
-    response = client.get("/agent/history",
+    response = client.get("/admin/history",
                            headers={"Content-Type": "application/json",
                                     "Authorization": "Bearer " + sample_valid_JWT},
                            data=json.dumps({"agentID": sample_Agent["agentID"]}))
@@ -46,14 +46,14 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     assert timeStarted >= timeDispatched
     assert timeEnded >= timeStarted
     assert finishedJob["argv"] == job["argv"]
-    assert finishedJob["status"] == job["status"]
+    assert finishedJob["exitCode"] == job["exitCode"]
     assert finishedJob["stdout"] == job["stdout"]
     assert finishedJob["stderr"] == job["stderr"]
     # post results again to verify that job was deleted from running queue
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 400
     assert response.json["error"] == "no matching jobs were supposed to be running"
 
@@ -66,7 +66,7 @@ def testUnknownAgentPostResults(client, sample_Job, sample_Agent):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     agent["jobsRunning"].append(job)
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -75,7 +75,7 @@ def testUnknownAgentPostResults(client, sample_Job, sample_Agent):
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": "not_an_agent"},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 400
     assert response.json["error"] == "agent ID not found"
 
@@ -88,7 +88,7 @@ def testMissingJobPostResults(client, sample_Job, sample_Agent):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     # intentionally not adding job to agent's running queue
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -97,7 +97,7 @@ def testMissingJobPostResults(client, sample_Job, sample_Agent):
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 400
     assert response.json["error"] == "no matching jobs were supposed to be running"
 
@@ -110,7 +110,7 @@ def testMissingFieldsPostResults(client, sample_Job, sample_Agent):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     agent["jobsRunning"].append(job)
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()

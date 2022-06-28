@@ -3,6 +3,7 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_sock import Sock
 import logging
+from .models import User
 from mongoengine import connect
 
 # initialize app
@@ -27,16 +28,27 @@ agentDB = connect(db="agents",
                   alias="agent_db",
                   username=Config.DB_USER,
                   password=Config.DB_PASS,
+                  authentication_source="admin",
                   host=Config.DB_URI)
 adminDB = connect(db="admins",
                   alias="admin_db",
                   username=Config.DB_USER,
                   password=Config.DB_PASS,
+                  authentication_source="admin",
                   host=Config.DB_URI)
+
+# create first admin if it doesn't already exist
+adminQuery = User.objects(username__exact="admin")
+if not adminQuery:
+    defaultAdmin = User(username="admin",
+                   name="Default Admin",
+                   passwordHash=Config.ADMIN_HASH)
+    defaultAdmin.save()
+    log.info("Created admin user")
 
 # initialize jobBoard cache
 from .jobBoard import JobBoard
 jobsCache = JobBoard()
 
-from . import errors
-from . import routes
+from server import errors
+from server.routes import admin, agent
