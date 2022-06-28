@@ -39,7 +39,7 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     assert timeStarted >= timeDispatched
     assert timeEnded >= timeStarted
     assert finishedJob["argv"] == job["argv"]
-    assert finishedJob["exitCode"] == job["status"]
+    assert finishedJob["exitCode"] == job["exitCode"]
     assert finishedJob["stdout"] == job["stdout"]
     assert finishedJob["stderr"] == job["stderr"]
 
