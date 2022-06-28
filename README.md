@@ -4,10 +4,10 @@ A cross-platform endpoint agent framework with easy capability adding.
 
 (currently in Alpha/development phase -- see project status at the bottom)
 
-![Commander Build/Tests](https://github.com/lawndoc/commander/actions/workflows/build-test.commander.yml/badge.svg)
+![Commander Tests](https://github.com/lawndoc/commander/actions/workflows/test-commander.yml/badge.svg)
 [![Commander Codecov](https://codecov.io/gh/lawndoc/commander/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/commander)
 
-![CAPy Build/Tests](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
+![CAPy Tests](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
 [![CAPy Codecov](https://codecov.io/gh/lawndoc/CAPy/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/CAPy)
 
 ## Out of the box features:
@@ -53,8 +53,8 @@ Right now I'm working on designing and implementing the last part of the API ser
 
 🚧**Admin**: Admin client is about 25% implemented (not tested). 
 
-✔️**CAPy**: The required functionality from CAPy is fully implemented and tested.
+✔️**CAPy**: The required functionality from CAPy is 100% implemented and tested.
 
-🚧**Nginx**: Nginx configuration ~~is 100% implemented and tested~~ needs to be updated after the addition of WebSockets to the server.
+✔️**Nginx**: Nginx configuration is 100% implemented and tested.
 
 ✔️**Docker**: Docker build and compose files are 100% implemented and tested.
