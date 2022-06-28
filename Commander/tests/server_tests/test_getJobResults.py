@@ -39,7 +39,7 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     assert timeStarted >= timeDispatched
     assert timeEnded >= timeStarted
     assert finishedJob["argv"] == job["argv"]
-    assert finishedJob["status"] == job["status"]
+    assert finishedJob["exitCode"] == job["status"]
     assert finishedJob["stdout"] == job["stdout"]
     assert finishedJob["stderr"] == job["stderr"]
 
@@ -65,7 +65,7 @@ def testUnknownAgentGetResults(client, sample_Job, sample_Agent, sample_valid_JW
     job["timeDispatched"] = utcNowTimestamp()
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -87,7 +87,7 @@ def testMissingFieldsGetResults(client, sample_Job, sample_Agent, sample_valid_J
     job["timeDispatched"] = utcNowTimestamp()
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()

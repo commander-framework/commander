@@ -11,7 +11,7 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     agent["jobsRunning"].append(job)
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -46,7 +46,7 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     assert timeStarted >= timeDispatched
     assert timeEnded >= timeStarted
     assert finishedJob["argv"] == job["argv"]
-    assert finishedJob["status"] == job["status"]
+    assert finishedJob["exitCode"] == job["exitCode"]
     assert finishedJob["stdout"] == job["stdout"]
     assert finishedJob["stderr"] == job["stderr"]
     # post results again to verify that job was deleted from running queue
@@ -66,7 +66,7 @@ def testUnknownAgentPostResults(client, sample_Job, sample_Agent):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     agent["jobsRunning"].append(job)
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -88,7 +88,7 @@ def testMissingJobPostResults(client, sample_Job, sample_Agent):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     # intentionally not adding job to agent's running queue
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
@@ -110,7 +110,7 @@ def testMissingFieldsPostResults(client, sample_Job, sample_Agent):
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     agent["jobsRunning"].append(job)
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
