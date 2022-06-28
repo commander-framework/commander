@@ -9,7 +9,7 @@ def testGetResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     job["timeDispatched"] = utcNowTimestamp()
     job.argv = ["-o", "output.txt", "-i", "input.txt"]
     job["timeStarted"] = utcNowTimestamp()
-    job["status"] = 0
+    job["exitCode"] = 0
     job["stdout"] = "stdout"
     job["stderr"] = "stderr"
     job["timeEnded"] = utcNowTimestamp()
