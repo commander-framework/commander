@@ -20,7 +20,7 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 200
     assert response.json["success"] == "successfully saved job response"
     # get finished jobs for the sample agent from the api server
@@ -53,7 +53,7 @@ def testPostResults(client, sample_Job, sample_Agent, sample_valid_JWT):
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 400
     assert response.json["error"] == "no matching jobs were supposed to be running"
 
@@ -75,7 +75,7 @@ def testUnknownAgentPostResults(client, sample_Job, sample_Agent):
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": "not_an_agent"},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 400
     assert response.json["error"] == "agent ID not found"
 
@@ -97,7 +97,7 @@ def testMissingJobPostResults(client, sample_Job, sample_Agent):
     response = client.post("/agent/history",
                            headers={"Content-Type": "application/json",
                                     "Agent-ID": sample_Agent["agentID"]},
-                           data=json.dumps({"job": job.to_json()}))
+                           data=json.dumps({"job": json.loads(job.to_json())}))
     assert response.status_code == 400
     assert response.json["error"] == "no matching jobs were supposed to be running"
 
