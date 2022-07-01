@@ -1,4 +1,4 @@
-![Commander Logo](resources/Commander.png)
+![Commander Logo](resources/CommanderLogo.png)
 
 A cross-platform endpoint agent framework with easy capability adding.
 
