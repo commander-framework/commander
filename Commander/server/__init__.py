@@ -1,3 +1,4 @@
+from bson import UuidRepresentation
 from config import Config
 from flask import Flask
 from flask_jwt_extended import JWTManager
@@ -30,13 +31,15 @@ agentDB = connect(db="agents",
                   username=Config.DB_USER,
                   password=Config.DB_PASS,
                   authentication_source="admin",
-                  host=Config.DB_URI)
+                  host=Config.DB_URI,
+                  uuidRepresentation="pythonLegacy")
 adminDB = connect(db="admins",
                   alias="admin_db",
                   username=Config.DB_USER,
                   password=Config.DB_PASS,
                   authentication_source="admin",
-                  host=Config.DB_URI)
+                  host=Config.DB_URI,
+                  uuidRepresentation="pythonLegacy")
 
 # create first admin if it doesn't already exist
 firstAdminLock = NamedAtomicLock("FirstAdmin")
