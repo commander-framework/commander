@@ -53,6 +53,7 @@ jobs:
     needs: unit-test
     environment: Test
     env:
+      ADMIN_HASH: ${{ secrets.ADMIN_HASH }}
       APP_NAME: ${{ secrets.APP_NAME }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASS: ${{ secrets.DB_PASS }}
