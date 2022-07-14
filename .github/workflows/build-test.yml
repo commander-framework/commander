@@ -71,7 +71,7 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build test and nginx containers
+      - name: Build containers
         run: docker-compose -f docker-compose.test.yml build
 
       - name: Deploy services
