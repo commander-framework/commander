@@ -56,8 +56,9 @@ RUN chmod +x ./run.sh
 # expose port
 EXPOSE 5000
 # mark library as volume and set permissions
-VOLUME ${UPLOADS_DIR}
-RUN echo chown -R abc:abc ${UPLOADS_DIR} >> /etc/cont-init.d/10-adduser
+RUN mkdir -p /opt/Commander/library
+VOLUME /opt/Commander/library
+RUN echo chown -R abc:abc /opt/Commander/library >> /etc/cont-init.d/10-adduser
 
 
 # make sure all messages always reach console
