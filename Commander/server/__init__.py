@@ -5,6 +5,7 @@ from flask_sock import Sock
 import logging
 from .models import User
 from mongoengine import connect
+from NamedAtomicLock import NamedAtomicLock
 
 # initialize app
 app = Flask(__name__)
@@ -38,13 +39,20 @@ adminDB = connect(db="admins",
                   host=Config.DB_URI)
 
 # create first admin if it doesn't already exist
-adminQuery = User.objects(username__exact="admin")
-if not adminQuery:
-    defaultAdmin = User(username="admin",
-                   name="Default Admin",
-                   passwordHash=Config.ADMIN_HASH)
-    defaultAdmin.save()
-    log.info("Created admin user")
+firstAdminLock = NamedAtomicLock("FirstAdmin")
+if firstAdminLock.acquire(timeout=3):
+    adminQuery = User.objects(username__exact="admin")
+    if not adminQuery:
+        defaultAdmin = User(username="admin",
+                    name="Default Admin",
+                    passwordHash=Config.ADMIN_HASH)
+        defaultAdmin.save()
+        log.info("Created admin user")
+    else:
+        log.info("Default admin already exists")
+    firstAdminLock.release()
+else:
+    log.info("Default admin already exists")
 
 # initialize jobBoard cache
 from .jobBoard import JobBoard
