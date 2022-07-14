@@ -58,3 +58,70 @@ Right now I'm working on designing and implementing the last part of the API ser
 ✔️**Nginx**: Nginx configuration is 100% implemented and tested.
 
 ✔️**Docker**: Docker build and compose files are 100% implemented and tested.
+
+
+## Deployment
+
+Commander requires the following environment variables to run properly:
+
+| Variable Name | Description | Required | Default Value |
+| --- | --- | --- | --- |
+| ADMIN_HASH | Bcrypt hash of the default admin's password | Yes | |
+| APP_NAME | Endpoint agent service name | No | Commander |
+| CA_HOSTNAME | FQDN or IP for CAPy microservice | Yes | |
+| DB_URI | MongoDB URI (without username and password) | Yes | |
+| DB_USER | MongoDB username | Yes | |
+| DB_PASS | MongoDB password | Yes | |
+| LOG_LEVEL | Log level for API server (1-5; Critical-Debug) | No | 4 |
+| REDIS_PASS | Redis password | Yes | |
+| REDIS_URI | Redis URI (without password) | Yes | |
+| PGID | Container user GID; used for volume file permissions | Yes | |
+| PUID | Container user UID; used for volume file permissions | Yes | |
+| SECRET_KEY | Secret key for encryption; make sure this value is complex and protected | Yes | |
+| UPLOADS_DIR | Directory where uploaded job files are saved | No | /opt/Commander/library/ |
+| WORKERS | Number of worker processes for gunicorn (gevent) | No | 2 |
+| WORKER_CONNECTIONS | Number of connections per gunicorn worker | No | 1000 |
+
+Commander also requires a volume mounted at the UPLOADS_DIR location to be able to persist job files across runs.
+
+The following docker-compose file provides example deployment code:
+
+```
+version: "3.9"
+services:
+  cache:
+    ...
+  capy:
+    ...
+  mongo:
+    ...
+  commander:
+    container_name: "commander"
+    image: ghcr.io/lawndoc/commander:main
+    depends_on:
+      - cache
+      - capy
+      - mongo
+    networks:
+      - application
+      - backend
+    restart: always
+    environment:
+      ADMIN_HASH: ${ADMIN_HASH}
+      APP_NAME: Commander
+      CA_HOSTNAME: capy
+      DB_URI: mongodb://mongo
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      LOG_LEVEL: 4                              # optional
+      PGID: 1001
+      PUID: 1000
+      REDIS_URI: redis://cache:6379
+      SECRET_KEY: ${SECRET_KEY}
+      UPLOADS_DIR: "/opt/Commander/library/"    # optional
+      WORKERS: 2
+      WORKER_CONNECTIONS: 1000
+networks:
+  application:
+  backend:
+```
