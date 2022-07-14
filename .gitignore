@@ -2,6 +2,9 @@
 commander.log
 volumes/
 
+# Redis
+dump.rdp
+
 # nektos/act
 bin/act
 
