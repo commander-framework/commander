@@ -47,9 +47,7 @@ services:
       PUID: ${PUID}
   commander:
     container_name: "commander"
-    build:
-      context: ./Commander
-      target: runner-image
+    image: ghcr.io/lawndoc/commander:main
     depends_on:
       - cache
       - capy
