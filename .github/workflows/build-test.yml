@@ -70,6 +70,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.actor }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push Docker image
+        working-directory: ./Commander
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
