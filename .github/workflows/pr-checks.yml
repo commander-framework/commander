@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  unit-test-pr:
     runs-on: ubuntu-latest
     container: python:3.9
 
@@ -43,3 +43,50 @@ jobs:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./Commander/coverage.xml
+
+  integration-test-pr:
+    runs-on: ubuntu-latest
+    needs: unit-test
+    environment: Test
+    env:
+      ADMIN_HASH: ${{ secrets.ADMIN_HASH }}
+      APP_NAME: ${{ secrets.APP_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASS: ${{ secrets.DB_PASS }}
+      REDIS_PASS: ${{ secrets.REDIS_PASS }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      PROXY_DOMAIN: ${{ secrets.PROXY_DOMAIN }}
+      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+      WORKERS: ${{ secrets.WORKERS }}
+      WORKER_CONNECTIONS: ${{ secrets.WORKER_CONNECTIONS }}
+      PUID: ${{ secrets.PUID }}
+      PGID: ${{ secrets.PGID }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Build test and nginx containers
+        run: docker-compose -f docker-compose.test.yml build
+
+      - name: Deploy services
+        run: docker-compose -f docker-compose.test.yml up -d
+
+      - name: Run tests
+        run: docker-compose -f docker-compose.test.yml run sut pytest
+
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './logs'
+      - name: Tar logs
+        if: failure()
+        run: tar cvzf ./logs.tgz ./logs
+      - name: Upload logs to GitHub
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: logs.tgz
+          path: ./logs.tgz
