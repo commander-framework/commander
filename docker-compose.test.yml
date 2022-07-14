@@ -32,40 +32,24 @@ services:
     restart: always
   capy:
     container_name: "capy"
-    build:
-      context: ./CAPy
-      target: runner-image
-      args:
-        SECRET_KEY: ${SECRET_KEY}
-        CA_NAME: "Commander CA"
-        CA_CERT_DIR: "/opt/CAPy/CA"
-        PROXY_DOMAIN: ${PROXY_DOMAIN}
+    image: ghcr.io/lawndoc/capy:main
     volumes:
       - ./volumes/capy:/opt/CAPy/CA
     networks:
       - backend
     restart: always
     environment:
-      PUID: ${PUID}
+      SECRET_KEY: ${SECRET_KEY}
+      CA_NAME: "Commander CA"
+      CA_CERT_DIR: "/opt/CAPy/CA"
       PGID: ${PGID}
+      PROXY_DOMAIN: ${PROXY_DOMAIN}
+      PUID: ${PUID}
   commander:
     container_name: "commander"
     build:
       context: ./Commander
       target: runner-image
-      args:
-        ADMIN_HASH: ${ADMIN_HASH}  # only used for integration tests
-        APP_NAME: ${APP_NAME}
-        CA_HOSTNAME: "capy"
-        DB_URI: mongodb://mongo
-        DB_USER: ${DB_USER}
-        DB_PASS: ${DB_PASS}
-        LOG_LEVEL: ${LOG_LEVEL}
-        REDIS_URI: redis://cache:6379
-        SECRET_KEY: ${SECRET_KEY}
-        UPLOADS_DIR: "/opt/commander/library/"
-        WORKERS: ${WORKERS}
-        WORKER_CONNECTIONS: ${WORKER_CONNECTIONS}
     depends_on:
       - cache
       - capy
@@ -75,14 +59,23 @@ services:
       - backend
     restart: always
     environment:
-      PUID: ${PUID}
+      ADMIN_HASH: ${ADMIN_HASH}
+      APP_NAME: Commander
+      CA_HOSTNAME: capy
+      DB_URI: mongodb://mongo
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      LOG_LEVEL: 5
       PGID: ${PGID}
+      PUID: ${PUID}
+      REDIS_URI: redis://cache:6379
+      SECRET_KEY: ${SECRET_KEY}
+      WORKERS: 2
+      WORKER_CONNECTIONS: 1000
   nginx:
     container_name: "nginx"
     build:
       context: ./Nginx
-      args:
-        PROXY_DOMAIN: ${PROXY_DOMAIN}
     depends_on:
       - commander
       - capy
@@ -95,8 +88,9 @@ services:
       - "443:443"
     restart: always
     environment:
-      PUID: ${PUID}
       PGID: ${PGID}
+      PROXY_DOMAIN: ${PROXY_DOMAIN}
+      PUID: ${PUID}
 
 networks:
   frontend:
