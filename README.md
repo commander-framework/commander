@@ -78,7 +78,6 @@ Commander requires the following environment variables to run properly:
 | PGID | Container user GID; used for volume file permissions | Yes | |
 | PUID | Container user UID; used for volume file permissions | Yes | |
 | SECRET_KEY | Secret key for encryption; make sure this value is complex and protected | Yes | |
-| UPLOADS_DIR | Directory where uploaded job files are saved | No | /opt/Commander/library/ |
 | WORKERS | Number of worker processes for gunicorn (gevent) | No | 2 |
 | WORKER_CONNECTIONS | Number of connections per gunicorn worker | No | 1000 |
 
@@ -118,7 +117,6 @@ services:
       PUID: 1000
       REDIS_URI: redis://cache:6379
       SECRET_KEY: ${SECRET_KEY}
-      UPLOADS_DIR: "/opt/Commander/library/"    # optional
       WORKERS: 2
       WORKER_CONNECTIONS: 1000
 networks:
