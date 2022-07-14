@@ -4,11 +4,13 @@ A cross-platform endpoint agent framework with easy capability adding.
 
 (currently in Alpha/development phase -- see project status at the bottom)
 
-![Commander Tests](https://github.com/lawndoc/commander/actions/workflows/test-commander.yml/badge.svg)
+![Commander Microservice](https://github.com/lawndoc/commander/actions/workflows/build-test.yml/badge.svg)
 [![Commander Codecov](https://codecov.io/gh/lawndoc/commander/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/commander)
 
-![CAPy Tests](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
+![CAPy Microservice](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
 [![CAPy Codecov](https://codecov.io/gh/lawndoc/CAPy/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/CAPy)
+
+![Integration Tests](https://github.com/lawndoc/commander/actions/workflows/integration-tests.yml/badge.svg)
 
 ## Out of the box features:
 
