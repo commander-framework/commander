@@ -4,13 +4,13 @@ A cross-platform endpoint agent framework with easy capability adding.
 
 (currently in Alpha/development phase -- see project status at the bottom)
 
-![Commander Microservice](https://github.com/lawndoc/commander/actions/workflows/build-test.yml/badge.svg)
-[![Commander Codecov](https://codecov.io/gh/lawndoc/commander/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/commander)
+![Commander Unit Tests and Build](https://github.com/commander-framework/commander/actions/workflows/build-test.yml/badge.svg)
+[![Codecov](https://codecov.io/gh/commander-framework/commander/branch/main/graph/badge.svg)](https://codecov.io/gh/commander-framework/commander)
 
-![CAPy Microservice](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
+![CAPy Unit Tests and Build](https://github.com/lawndoc/CAPy/actions/workflows/build-test.yml/badge.svg)
 [![CAPy Codecov](https://codecov.io/gh/lawndoc/CAPy/branch/main/graph/badge.svg)](https://codecov.io/gh/lawndoc/CAPy)
 
-![Integration Tests](https://github.com/lawndoc/commander/actions/workflows/integration-tests.yml/badge.svg)
+![Integration Tests](https://github.com/commander-framework/commander/actions/workflows/integration-tests.yml/badge.svg)
 
 ## Out of the box features:
 
@@ -33,11 +33,11 @@ Groups of agents can be assigned a version number that is changable by an admin.
 
 ### 🔒 TLS encryption
 
-All communication between the server and the agents is done via HTTPS and WSS, but there is no need to mess with certificates yourself. Server certificate generation and deployment is automatically handled by [CAPy](https://github.com/doctormay6/CAPy), and root CA trust is automatically set up on the agents when they are deployed.
+All communication between the server and the agents is done via HTTPS and WSS, but there is no need to mess with certificates yourself. Server certificate generation and deployment is automatically handled by [CAPy](https://github.com/lawndoc/CAPy), and root CA trust is automatically set up on the agents when they are deployed.
 
 ### 📑 Certificate authentication (bidirectional)
 
-In addition to a server-side certificate for encryption, admins and agents must use a host-based certificate to be able to interact with the server. This process is also completely automated during agent deployment using the [CAPy](https://github.com/doctormay6/CAPy) microservice.
+In addition to a server-side certificate for encryption, admins and agents must use a host-based certificate to be able to interact with the server. This process is also completely automated during agent deployment using the [CAPy](https://github.com/lawndoc/CAPy) microservice.
 
 ### 🔑 Admin authentication
 
@@ -85,43 +85,5 @@ Commander requires the following environment variables to run properly:
 
 Commander also requires a volume mounted at the UPLOADS_DIR location to be able to persist job files across runs.
 
-The following docker-compose file provides example deployment code:
+Please use or reference the docker-compose file provided in this repo for deployment.
 
-```
-version: "3.9"
-services:
-  cache:
-    ...
-  capy:
-    ...
-  mongo:
-    ...
-  commander:
-    container_name: "commander"
-    image: ghcr.io/lawndoc/commander:main
-    depends_on:
-      - cache
-      - capy
-      - mongo
-    networks:
-      - application
-      - backend
-    restart: always
-    environment:
-      ADMIN_HASH: ${ADMIN_HASH}
-      APP_NAME: Commander
-      CA_HOSTNAME: capy
-      DB_URI: mongodb://mongo
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
-      LOG_LEVEL: 4                              # optional
-      PGID: 1001
-      PUID: 1000
-      REDIS_URI: redis://cache:6379
-      SECRET_KEY: ${SECRET_KEY}
-      WORKERS: 2
-      WORKER_CONNECTIONS: 1000
-networks:
-  application:
-  backend:
-```
