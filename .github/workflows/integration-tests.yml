@@ -10,7 +10,7 @@ on:
 
 jobs:
   integration-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-test
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: Test
     env:
