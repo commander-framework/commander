@@ -10,7 +10,7 @@ on:
 
 jobs:
   integration-test:
-    runs-on: ubuntu-test
+    runs-on: self-hosted
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: Test
     env:
