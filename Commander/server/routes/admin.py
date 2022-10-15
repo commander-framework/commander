@@ -16,7 +16,7 @@ from .validation import missing, missingJobForm, missingJobFields
 import zipfile
 
 
-@app.get("/admin/installer")  # add route for /version/filename
+@app.get("/admin/installer")  # TODO: add route for /version/filename
 @jwt_required()
 def sendAgentInstaller():
     """ Fetch or generate an agent installer for the given operating system """
