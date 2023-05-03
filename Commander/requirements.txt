@@ -1,5 +1,5 @@
 bcrypt==3.2.0
-Flask==2.0.3
+Flask==2.2.5
 Flask-JWT-Extended==4.3.1
 flask-sock==0.5.2
 gevent==21.8.0
